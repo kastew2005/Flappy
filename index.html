@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Flappy Bird Store Edition</title>
+  <title>Happy Pig</title>
   <style>
     * {
       touch-action: manipulation;
@@ -57,8 +57,8 @@ const sound = {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.1);
     gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
     osc.connect(gain);
@@ -121,24 +121,24 @@ let state = {
 
 let frames = 0;
 let score = 0;
-let highScore = parseInt(localStorage.getItem('flappy_highscore')) || 0;
-let coins = parseInt(localStorage.getItem('flappy_coins')) || 0;
-let equippedSkin = localStorage.getItem('flappy_equippedSkin') || 'default';
-let ownedSkins = JSON.parse(localStorage.getItem('flappy_ownedSkins')) || ['default'];
+let gameSpeed = 2;
+let highScore = parseInt(localStorage.getItem('pig_highscore')) || 0;
+let coins = parseInt(localStorage.getItem('pig_coins')) || 0;
+let equippedSkin = localStorage.getItem('pig_equippedSkin') || 'default';
+let ownedSkins = JSON.parse(localStorage.getItem('pig_ownedSkins')) || ['default'];
 
-// --- СКИНИ КАТАЛОГ ---
+// --- СКИНИ ДЛЯ СВИНЬИ ---
 const skins = [
-  { id: 'default', name: 'Обычная', price: 0 },
-  { id: 'mustache', name: 'Усы', price: 5 },
-  { id: 'hat', name: 'Шляпа', price: 15 },
-  { id: 'cone', name: 'Конус', price: 30 }
+  { id: 'default', name: 'Обычная свинья', price: 0, bodyColor: '#FFB6C1', snoutColor: '#FF69B4' },
+  { id: 'muddy', name: 'Свинья в грязи', price: 10, bodyColor: '#FFB6C1', snoutColor: '#FF69B4', isMuddy: true },
+  { id: 'black', name: 'Черная свинья', price: 20, bodyColor: '#333333', snoutColor: '#555555' },
+  { id: 'gold', name: 'Золотая свинья', price: 50, bodyColor: '#FFD700', snoutColor: '#FFA500' }
 ];
 
 // Координаты кнопок
-const shopBtn = { x: 130, y: 350, w: 140, h: 45 };
+const shopBtn = { x: 130, y: 380, w: 140, h: 45 };
 const backBtn = { x: 130, y: 530, w: 140, h: 40 };
 
-// Обработка клика/тапа
 function handleInput(clientX, clientY) {
   initAudio();
   const rect = canvas.getBoundingClientRect();
@@ -148,30 +148,28 @@ function handleInput(clientX, clientY) {
   const clickY = (clientY - rect.top) * scaleY;
 
   if (state.current === state.store) {
-    // Клики внутри магазина
     if (clickX >= backBtn.x && clickX <= backBtn.x + backBtn.w &&
         clickY >= backBtn.y && clickY <= backBtn.y + backBtn.h) {
       state.current = state.getReady;
       return;
     }
 
-    // Проверка клика по товарам
     skins.forEach((s, i) => {
       const itemY = 140 + i * 90;
-      const btnX = 260, btnY = itemY + 10, btnW = 100, btnH = 35;
+      const btnX = 260, btnY = itemY + 20, btnW = 100, btnH = 35;
       
       if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
         if (ownedSkins.includes(s.id)) {
           equippedSkin = s.id;
-          localStorage.setItem('flappy_equippedSkin', equippedSkin);
+          localStorage.setItem('pig_equippedSkin', equippedSkin);
           sound.buy();
         } else if (coins >= s.price) {
           coins -= s.price;
           ownedSkins.push(s.id);
           equippedSkin = s.id;
-          localStorage.setItem('flappy_coins', coins);
-          localStorage.setItem('flappy_ownedSkins', JSON.stringify(ownedSkins));
-          localStorage.setItem('flappy_equippedSkin', equippedSkin);
+          localStorage.setItem('pig_coins', coins);
+          localStorage.setItem('pig_ownedSkins', JSON.stringify(ownedSkins));
+          localStorage.setItem('pig_equippedSkin', equippedSkin);
           sound.buy();
         }
       }
@@ -179,7 +177,6 @@ function handleInput(clientX, clientY) {
     return;
   }
 
-  // Клик по кнопке магазина в меню GetReady
   if (state.current === state.getReady) {
     if (clickX >= shopBtn.x && clickX <= shopBtn.x + shopBtn.w &&
         clickY >= shopBtn.y && clickY <= shopBtn.y + shopBtn.h) {
@@ -188,25 +185,24 @@ function handleInput(clientX, clientY) {
     }
   }
 
-  // Основной игровой процесс
   switch (state.current) {
     case state.getReady:
       state.current = state.game;
-      bird.flap();
+      pig.flap();
       break;
     case state.game:
-      bird.flap();
+      pig.flap();
       break;
     case state.gameOver:
       pipes.reset();
-      bird.reset();
+      pig.reset();
       score = 0;
+      gameSpeed = 2;
       state.current = state.getReady;
       break;
   }
 }
 
-// События ввода
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Space') {
     if (state.current !== state.store) handleInput(0, 0);
@@ -251,7 +247,7 @@ const ground = {
   h: 80,
   update() {
     if (state.current === state.game) {
-      this.x = (this.x - 2) % 20;
+      this.x = (this.x - gameSpeed) % 20;
     }
   },
   draw() {
@@ -272,16 +268,15 @@ const ground = {
   }
 };
 
-// Птичка
-const bird = {
+// Свинья (Персонаж)
+const pig = {
   x: 80,
   y: 250,
-  r: 14,
+  r: 15,
   gravity: 0.25,
   jump: 4.6,
   velocity: 0,
   rotation: 0,
-  wingPos: 0,
 
   flap() {
     this.velocity = -this.jump;
@@ -298,7 +293,6 @@ const bird = {
     if (state.current === state.getReady || state.current === state.store) {
       this.y = 250 + Math.sin(frames / 10) * 6;
       this.rotation = 0;
-      this.wingPos = Math.sin(frames / 5) * 5;
     } else {
       this.velocity += this.gravity;
       this.y += this.velocity;
@@ -313,63 +307,34 @@ const bird = {
 
       if (this.velocity < 0) {
         this.rotation = -0.3;
-        this.wingPos = Math.sin(frames * 0.4) * 8;
       } else {
         this.rotation += 0.04;
         if (this.rotation > 1.1) this.rotation = 1.1;
-        this.wingPos = 0;
       }
     }
   },
 
-  drawSkin(skinId) {
-    if (skinId === 'mustache') {
-      // Пышные черные усы под клювом
-      ctx.fillStyle = '#111';
-      ctx.beginPath();
-      ctx.arc(4, 6, 5, 0, Math.PI);
-      ctx.arc(12, 6, 5, 0, Math.PI);
-      ctx.fill();
-    } else if (skinId === 'hat') {
-      // Черный цилиндр
-      ctx.fillStyle = '#111';
-      ctx.fillRect(-8, -22, 16, 12);
-      ctx.fillRect(-12, -10, 24, 3);
-      ctx.fillStyle = '#E74C3C'; // Красная лента
-      ctx.fillRect(-8, -13, 16, 3);
-    } else if (skinId === 'cone') {
-      // Оранжевый дорожный конус
-      ctx.fillStyle = '#E67E22';
-      ctx.beginPath();
-      ctx.moveTo(0, -25);
-      ctx.lineTo(-9, -8);
-      ctx.lineTo(9, -8);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillRect(-11, -8, 22, 3);
-      // Белая полоска на конусе
-      ctx.fillStyle = '#FFF';
-      ctx.beginPath();
-      ctx.moveTo(-3, -18);
-      ctx.lineTo(3, -18);
-      ctx.lineTo(5, -13);
-      ctx.lineTo(-5, -13);
-      ctx.closePath();
-      ctx.fill();
-    }
-  },
-
-  draw(customX, customY, customSkin) {
+  draw(customX, customY, customSkinId) {
     const x = customX !== undefined ? customX : this.x;
     const y = customY !== undefined ? customY : this.y;
-    const currentSkin = customSkin !== undefined ? customSkin : equippedSkin;
+    const skinId = customSkinId !== undefined ? customSkinId : equippedSkin;
+    const skinData = skins.find(s => s.id === skinId) || skins[0];
 
     ctx.save();
     ctx.translate(x, y);
     if (customX === undefined) ctx.rotate(this.rotation);
 
+    // Ушки
+    ctx.fillStyle = skinData.snoutColor;
+    ctx.beginPath();
+    ctx.ellipse(-8, -12, 6, 4, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(4, -13, 6, 4, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
     // Тело
-    ctx.fillStyle = '#F4D03F';
+    ctx.fillStyle = skinData.bodyColor;
     ctx.beginPath();
     ctx.arc(0, 0, this.r, 0, Math.PI * 2);
     ctx.fill();
@@ -377,35 +342,45 @@ const bird = {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Глаз
+    // Грязь для скина "Свинья в грязи"
+    if (skinData.isMuddy) {
+      ctx.fillStyle = '#654321';
+      ctx.beginPath();
+      ctx.arc(-6, -4, 4, 0, Math.PI * 2);
+      ctx.arc(4, 6, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Глаза
     ctx.fillStyle = '#FFF';
     ctx.beginPath();
-    ctx.arc(5, -4, 5, 0, Math.PI * 2);
+    ctx.arc(4, -5, 4, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#000';
     ctx.beginPath();
-    ctx.arc(6, -4, 2, 0, Math.PI * 2);
+    ctx.arc(5, -5, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Клюв
-    ctx.fillStyle = '#E67E22';
+    // Пятачок
+    ctx.fillStyle = skinData.snoutColor;
     ctx.beginPath();
-    ctx.moveTo(8, 0);
-    ctx.lineTo(18, 4);
-    ctx.lineTo(8, 8);
-    ctx.closePath();
+    ctx.ellipse(9, 2, 6, 5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    // Крыло
-    ctx.fillStyle = '#F39C12';
+    // Дырки в пятачке
+    ctx.fillStyle = '#000';
     ctx.beginPath();
-    ctx.ellipse(-4, 2 + (customX === undefined ? this.wingPos : 0), 8, 5, 0, 0, Math.PI * 2);
+    ctx.arc(7, 2, 1.2, 0, Math.PI * 2);
+    ctx.arc(11, 2, 1.2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.stroke();
 
-    // Отрисовка аксессуара
-    this.drawSkin(currentSkin);
+    // Хвостик крючком
+    ctx.strokeStyle = skinData.snoutColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(-16, 2, 4, 0, Math.PI);
+    ctx.stroke();
 
     ctx.restore();
   }
@@ -424,7 +399,11 @@ const pipes = {
   update() {
     if (state.current !== state.game) return;
 
-    if (frames % 120 === 0) {
+    // Ускорение каждые 10 очков
+    gameSpeed = 2 + Math.floor(score / 10) * 0.4;
+    const spawnInterval = Math.max(70, Math.floor(120 - (gameSpeed - 2) * 15));
+
+    if (frames % spawnInterval === 0) {
       const minY = 80;
       const maxY = canvas.height - ground.h - this.gap - 80;
       const topY = -Math.floor(Math.random() * (maxY - minY + 1) + minY);
@@ -437,25 +416,25 @@ const pipes = {
     }
 
     this.items.forEach((p, index) => {
-      p.x -= 2;
+      p.x -= gameSpeed;
 
       const bottomY = p.top + 400 + this.gap;
 
-      if ((bird.x + bird.r > p.x && bird.x - bird.r < p.x + this.w && bird.y - bird.r < p.top + 400) ||
-          (bird.x + bird.r > p.x && bird.x - bird.r < p.x + this.w && bird.y + bird.r > bottomY)) {
+      if ((pig.x + pig.r > p.x && pig.x - pig.r < p.x + this.w && pig.y - pig.r < p.top + 400) ||
+          (pig.x + pig.r > p.x && pig.x - pig.r < p.x + this.w && pig.y + pig.r > bottomY)) {
         sound.hit();
         state.current = state.gameOver;
       }
 
-      if (p.x + this.w < bird.x && !p.passed) {
+      if (p.x + this.w < pig.x && !p.passed) {
         score++;
         coins++;
-        localStorage.setItem('flappy_coins', coins);
+        localStorage.setItem('pig_coins', coins);
         sound.score();
         p.passed = true;
         if (score > highScore) {
           highScore = score;
-          localStorage.setItem('flappy_highscore', highScore);
+          localStorage.setItem('pig_highscore', highScore);
         }
       }
 
@@ -497,19 +476,29 @@ const pipes = {
   }
 };
 
-// Иконка монеты
-function drawCoin(x, y) {
+// Отрисовка монеты в углу
+function drawTopRightCoins() {
+  const x = canvas.width - 30;
+  const y = 25;
   ctx.fillStyle = '#F1C40F';
   ctx.beginPath();
-  ctx.arc(x, y, 10, 0, Math.PI * 2);
+  ctx.arc(x - 45, y, 9, 0, Math.PI * 2);
   ctx.fill();
   ctx.strokeStyle = '#D4AC0D';
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.fillStyle = '#B7950B';
-  ctx.font = 'bold 12px sans-serif';
+  ctx.font = 'bold 11px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('$', x, y + 4);
+  ctx.fillText('$', x - 45, y + 4);
+
+  ctx.fillStyle = '#FFF';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 3;
+  ctx.font = 'bold 18px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(coins, x, y + 6);
+  ctx.strokeText(coins, x, y + 6);
 }
 
 // Отрисовка магазина
@@ -520,36 +509,26 @@ function drawStore() {
   ctx.fillStyle = '#FFF';
   ctx.font = 'bold 26px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('МАГАЗИН СКИНИ', canvas.width / 2, 50);
+  ctx.fillText('СКИНИ СВИНЬИ', canvas.width / 2, 50);
 
-  // Отображение монет
-  drawCoin(canvas.width / 2 - 40, 85);
-  ctx.fillStyle = '#F1C40F';
-  ctx.font = 'bold 20px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(`Монеты: ${coins}`, canvas.width / 2 - 20, 92);
+  drawTopRightCoins();
 
-  // Отрисовка списка предметов
   skins.forEach((s, i) => {
     const itemY = 140 + i * 90;
 
-    // Фон карточки
     ctx.fillStyle = '#2C3E50';
     ctx.fillRect(20, itemY, 360, 75);
     ctx.strokeStyle = '#34495E';
     ctx.lineWidth = 2;
     ctx.strokeRect(20, itemY, 360, 75);
 
-    // Отрисовка предпросмотра птички
-    bird.draw(60, itemY + 38, s.id);
+    pig.draw(60, itemY + 38, s.id);
 
-    // Название товара
     ctx.fillStyle = '#FFF';
-    ctx.font = 'bold 16px sans-serif';
+    ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(s.name, 100, itemY + 35);
+    ctx.fillText(s.name, 100, itemY + 43);
 
-    // Кнопка действия (Надеть / Купить)
     const btnX = 260, btnY = itemY + 20, btnW = 100, btnH = 35;
     const isOwned = ownedSkins.includes(s.id);
     const isEquipped = equippedSkin === s.id;
@@ -578,7 +557,6 @@ function drawStore() {
     }
   });
 
-  // Кнопка "Назад"
   ctx.fillStyle = '#E74C3C';
   ctx.fillRect(backBtn.x, backBtn.y, backBtn.w, backBtn.h);
   ctx.fillStyle = '#FFF';
@@ -597,21 +575,31 @@ function drawUI() {
     ctx.textAlign = 'center';
     ctx.fillText(score, canvas.width / 2, 50);
     ctx.strokeText(score, canvas.width / 2, 50);
-  } else if (state.current === state.getReady) {
-    ctx.font = 'bold 24px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('ТАПНИТЕ ДЛЯ СТАРТА', canvas.width / 2, 180);
-    ctx.strokeText('ТАПНИТЕ ДЛЯ СТАРТА', canvas.width / 2, 180);
 
-    // Монеты в главном меню
-    drawCoin(canvas.width / 2 - 35, 240);
-    ctx.fillStyle = '#F1C40F';
+    // Отображение уровня сложности/ускорения
+    if (score >= 10) {
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText(`Скорость: x${(gameSpeed / 2).toFixed(1)}`, canvas.width / 2, 75);
+    }
+  } else if (state.current === state.getReady) {
+    ctx.font = 'bold 32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('HAPPY PIG', canvas.width / 2, 120);
+    ctx.strokeText('HAPPY PIG', canvas.width / 2, 120);
+
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillText('ТАПНИТЕ ДЛЯ СТАРТА', canvas.width / 2, 180);
+
+    // Рекорд в главном меню
+    ctx.fillStyle = '#F39C12';
     ctx.font = 'bold 22px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(coins, canvas.width / 2 - 15, 248);
+    ctx.fillText(`РЕКОРД: ${highScore}`, canvas.width / 2, 280);
+    ctx.strokeText(`РЕКОРД: ${highScore}`, canvas.width / 2, 280);
+
+    drawTopRightCoins();
 
     // Кнопка Магазина
-    ctx.fillStyle = '#F39C12';
+    ctx.fillStyle = '#E67E22';
     ctx.fillRect(shopBtn.x, shopBtn.y, shopBtn.w, shopBtn.h);
     ctx.strokeStyle = '#000';
     ctx.strokeRect(shopBtn.x, shopBtn.y, shopBtn.w, shopBtn.h);
@@ -657,8 +645,8 @@ function loop() {
   ground.update();
   ground.draw();
 
-  bird.update();
-  bird.draw();
+  pig.update();
+  pig.draw();
 
   drawUI();
 
