@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Flappy Bird Mobile Ready</title>
+  <title>Flappy Bird Store Edition</title>
   <style>
     * {
       touch-action: manipulation;
@@ -56,57 +56,57 @@ const sound = {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    
     osc.type = 'sine';
     osc.frequency.setValueAtTime(400, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-    
     gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-    
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    
     osc.start();
     osc.stop(audioCtx.currentTime + 0.1);
   },
-
   score() {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
     osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08);
-    
     gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-    
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    
     osc.start();
     osc.stop(audioCtx.currentTime + 0.25);
   },
-
   hit() {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(150, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
-    
     gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-    
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    
     osc.start();
     osc.stop(audioCtx.currentTime + 0.3);
+  },
+  buy() {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.15);
   }
 };
 
@@ -115,21 +115,80 @@ let state = {
   current: 0,
   getReady: 0,
   game: 1,
-  gameOver: 2
+  gameOver: 2,
+  store: 3
 };
 
 let frames = 0;
 let score = 0;
-let highScore = localStorage.getItem('flappy_highscore') || 0;
+let highScore = parseInt(localStorage.getItem('flappy_highscore')) || 0;
+let coins = parseInt(localStorage.getItem('flappy_coins')) || 0;
+let equippedSkin = localStorage.getItem('flappy_equippedSkin') || 'default';
+let ownedSkins = JSON.parse(localStorage.getItem('flappy_ownedSkins')) || ['default'];
 
-// Управление
-const flap = (e) => {
-  if (e) {
-    e.preventDefault();
-  }
-  
+// --- СКИНИ КАТАЛОГ ---
+const skins = [
+  { id: 'default', name: 'Обычная', price: 0 },
+  { id: 'mustache', name: 'Усы', price: 5 },
+  { id: 'hat', name: 'Шляпа', price: 15 },
+  { id: 'cone', name: 'Конус', price: 30 }
+];
+
+// Координаты кнопок
+const shopBtn = { x: 130, y: 350, w: 140, h: 45 };
+const backBtn = { x: 130, y: 530, w: 140, h: 40 };
+
+// Обработка клика/тапа
+function handleInput(clientX, clientY) {
   initAudio();
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const clickX = (clientX - rect.left) * scaleX;
+  const clickY = (clientY - rect.top) * scaleY;
 
+  if (state.current === state.store) {
+    // Клики внутри магазина
+    if (clickX >= backBtn.x && clickX <= backBtn.x + backBtn.w &&
+        clickY >= backBtn.y && clickY <= backBtn.y + backBtn.h) {
+      state.current = state.getReady;
+      return;
+    }
+
+    // Проверка клика по товарам
+    skins.forEach((s, i) => {
+      const itemY = 140 + i * 90;
+      const btnX = 260, btnY = itemY + 10, btnW = 100, btnH = 35;
+      
+      if (clickX >= btnX && clickX <= btnX + btnW && clickY >= btnY && clickY <= btnY + btnH) {
+        if (ownedSkins.includes(s.id)) {
+          equippedSkin = s.id;
+          localStorage.setItem('flappy_equippedSkin', equippedSkin);
+          sound.buy();
+        } else if (coins >= s.price) {
+          coins -= s.price;
+          ownedSkins.push(s.id);
+          equippedSkin = s.id;
+          localStorage.setItem('flappy_coins', coins);
+          localStorage.setItem('flappy_ownedSkins', JSON.stringify(ownedSkins));
+          localStorage.setItem('flappy_equippedSkin', equippedSkin);
+          sound.buy();
+        }
+      }
+    });
+    return;
+  }
+
+  // Клик по кнопке магазина в меню GetReady
+  if (state.current === state.getReady) {
+    if (clickX >= shopBtn.x && clickX <= shopBtn.x + shopBtn.w &&
+        clickY >= shopBtn.y && clickY <= shopBtn.y + shopBtn.h) {
+      state.current = state.store;
+      return;
+    }
+  }
+
+  // Основной игровой процесс
   switch (state.current) {
     case state.getReady:
       state.current = state.game;
@@ -145,20 +204,20 @@ const flap = (e) => {
       state.current = state.getReady;
       break;
   }
-};
+}
 
-// Клавиатура
+// События ввода
 window.addEventListener('keydown', (e) => {
-  if (e.code === 'Space') flap(e);
+  if (e.code === 'Space') {
+    if (state.current !== state.store) handleInput(0, 0);
+  }
 });
-
-// Мышь
-canvas.addEventListener('click', flap);
-
-// Мобильное управление (Touch Events)
-canvas.addEventListener('touchstart', flap, { passive: false });
-
-// Блокировка вызова контекстного меню при долгом тапе
+canvas.addEventListener('click', (e) => handleInput(e.clientX, e.clientY));
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  handleInput(touch.clientX, touch.clientY);
+}, { passive: false });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // Облака
@@ -236,7 +295,7 @@ const bird = {
   },
 
   update() {
-    if (state.current === state.getReady) {
+    if (state.current === state.getReady || state.current === state.store) {
       this.y = 250 + Math.sin(frames / 10) * 6;
       this.rotation = 0;
       this.wingPos = Math.sin(frames / 5) * 5;
@@ -263,11 +322,53 @@ const bird = {
     }
   },
 
-  draw() {
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.rotation);
+  drawSkin(skinId) {
+    if (skinId === 'mustache') {
+      // Пышные черные усы под клювом
+      ctx.fillStyle = '#111';
+      ctx.beginPath();
+      ctx.arc(4, 6, 5, 0, Math.PI);
+      ctx.arc(12, 6, 5, 0, Math.PI);
+      ctx.fill();
+    } else if (skinId === 'hat') {
+      // Черный цилиндр
+      ctx.fillStyle = '#111';
+      ctx.fillRect(-8, -22, 16, 12);
+      ctx.fillRect(-12, -10, 24, 3);
+      ctx.fillStyle = '#E74C3C'; // Красная лента
+      ctx.fillRect(-8, -13, 16, 3);
+    } else if (skinId === 'cone') {
+      // Оранжевый дорожный конус
+      ctx.fillStyle = '#E67E22';
+      ctx.beginPath();
+      ctx.moveTo(0, -25);
+      ctx.lineTo(-9, -8);
+      ctx.lineTo(9, -8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillRect(-11, -8, 22, 3);
+      // Белая полоска на конусе
+      ctx.fillStyle = '#FFF';
+      ctx.beginPath();
+      ctx.moveTo(-3, -18);
+      ctx.lineTo(3, -18);
+      ctx.lineTo(5, -13);
+      ctx.lineTo(-5, -13);
+      ctx.closePath();
+      ctx.fill();
+    }
+  },
 
+  draw(customX, customY, customSkin) {
+    const x = customX !== undefined ? customX : this.x;
+    const y = customY !== undefined ? customY : this.y;
+    const currentSkin = customSkin !== undefined ? customSkin : equippedSkin;
+
+    ctx.save();
+    ctx.translate(x, y);
+    if (customX === undefined) ctx.rotate(this.rotation);
+
+    // Тело
     ctx.fillStyle = '#F4D03F';
     ctx.beginPath();
     ctx.arc(0, 0, this.r, 0, Math.PI * 2);
@@ -276,6 +377,7 @@ const bird = {
     ctx.lineWidth = 2;
     ctx.stroke();
 
+    // Глаз
     ctx.fillStyle = '#FFF';
     ctx.beginPath();
     ctx.arc(5, -4, 5, 0, Math.PI * 2);
@@ -285,6 +387,7 @@ const bird = {
     ctx.arc(6, -4, 2, 0, Math.PI * 2);
     ctx.fill();
 
+    // Клюв
     ctx.fillStyle = '#E67E22';
     ctx.beginPath();
     ctx.moveTo(8, 0);
@@ -294,11 +397,15 @@ const bird = {
     ctx.fill();
     ctx.stroke();
 
+    // Крыло
     ctx.fillStyle = '#F39C12';
     ctx.beginPath();
-    ctx.ellipse(-4, 2 + this.wingPos, 8, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(-4, 2 + (customX === undefined ? this.wingPos : 0), 8, 5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    // Отрисовка аксессуара
+    this.drawSkin(currentSkin);
 
     ctx.restore();
   }
@@ -342,6 +449,8 @@ const pipes = {
 
       if (p.x + this.w < bird.x && !p.passed) {
         score++;
+        coins++;
+        localStorage.setItem('flappy_coins', coins);
         sound.score();
         p.passed = true;
         if (score > highScore) {
@@ -388,6 +497,96 @@ const pipes = {
   }
 };
 
+// Иконка монеты
+function drawCoin(x, y) {
+  ctx.fillStyle = '#F1C40F';
+  ctx.beginPath();
+  ctx.arc(x, y, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#D4AC0D';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#B7950B';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('$', x, y + 4);
+}
+
+// Отрисовка магазина
+function drawStore() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#FFF';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('МАГАЗИН СКИНИ', canvas.width / 2, 50);
+
+  // Отображение монет
+  drawCoin(canvas.width / 2 - 40, 85);
+  ctx.fillStyle = '#F1C40F';
+  ctx.font = 'bold 20px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`Монеты: ${coins}`, canvas.width / 2 - 20, 92);
+
+  // Отрисовка списка предметов
+  skins.forEach((s, i) => {
+    const itemY = 140 + i * 90;
+
+    // Фон карточки
+    ctx.fillStyle = '#2C3E50';
+    ctx.fillRect(20, itemY, 360, 75);
+    ctx.strokeStyle = '#34495E';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(20, itemY, 360, 75);
+
+    // Отрисовка предпросмотра птички
+    bird.draw(60, itemY + 38, s.id);
+
+    // Название товара
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(s.name, 100, itemY + 35);
+
+    // Кнопка действия (Надеть / Купить)
+    const btnX = 260, btnY = itemY + 20, btnW = 100, btnH = 35;
+    const isOwned = ownedSkins.includes(s.id);
+    const isEquipped = equippedSkin === s.id;
+
+    if (isEquipped) {
+      ctx.fillStyle = '#27AE60';
+      ctx.fillRect(btnX, btnY, btnW, btnH);
+      ctx.fillStyle = '#FFF';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('НАДЕТО', btnX + btnW / 2, btnY + 22);
+    } else if (isOwned) {
+      ctx.fillStyle = '#2980B9';
+      ctx.fillRect(btnX, btnY, btnW, btnH);
+      ctx.fillStyle = '#FFF';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('НАДЕТЬ', btnX + btnW / 2, btnY + 22);
+    } else {
+      ctx.fillStyle = coins >= s.price ? '#E67E22' : '#7F8C8D';
+      ctx.fillRect(btnX, btnY, btnW, btnH);
+      ctx.fillStyle = '#FFF';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${s.price} монет`, btnX + btnW / 2, btnY + 22);
+    }
+  });
+
+  // Кнопка "Назад"
+  ctx.fillStyle = '#E74C3C';
+  ctx.fillRect(backBtn.x, backBtn.y, backBtn.w, backBtn.h);
+  ctx.fillStyle = '#FFF';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('НАЗАД', backBtn.x + backBtn.w / 2, backBtn.y + 26);
+}
+
 function drawUI() {
   ctx.fillStyle = '#FFF';
   ctx.strokeStyle = '#000';
@@ -401,27 +600,47 @@ function drawUI() {
   } else if (state.current === state.getReady) {
     ctx.font = 'bold 24px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('ТАПНИТЕ ДЛЯ СТАРТА', canvas.width / 2, 200);
-    ctx.strokeText('ТАПНИТЕ ДЛЯ СТАРТА', canvas.width / 2, 200);
+    ctx.fillText('ТАПНИТЕ ДЛЯ СТАРТА', canvas.width / 2, 180);
+    ctx.strokeText('ТАПНИТЕ ДЛЯ СТАРТА', canvas.width / 2, 180);
+
+    // Монеты в главном меню
+    drawCoin(canvas.width / 2 - 35, 240);
+    ctx.fillStyle = '#F1C40F';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(coins, canvas.width / 2 - 15, 248);
+
+    // Кнопка Магазина
+    ctx.fillStyle = '#F39C12';
+    ctx.fillRect(shopBtn.x, shopBtn.y, shopBtn.w, shopBtn.h);
+    ctx.strokeStyle = '#000';
+    ctx.strokeRect(shopBtn.x, shopBtn.y, shopBtn.w, shopBtn.h);
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('МАГАЗИН', shopBtn.x + shopBtn.w / 2, shopBtn.y + 28);
   } else if (state.current === state.gameOver) {
     ctx.fillStyle = '#DECE9C';
-    ctx.fillRect(60, 180, 280, 160);
-    ctx.strokeRect(60, 180, 280, 160);
+    ctx.fillRect(60, 160, 280, 180);
+    ctx.strokeRect(60, 160, 280, 180);
 
     ctx.fillStyle = '#E74C3C';
     ctx.font = 'bold 28px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', canvas.width / 2, 220);
+    ctx.fillText('GAME OVER', canvas.width / 2, 200);
 
     ctx.fillStyle = '#000';
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`Счет: ${score}`, 90, 260);
-    ctx.fillText(`Рекорд: ${highScore}`, 90, 290);
+    ctx.fillText(`Счет: ${score}`, 90, 240);
+    ctx.fillText(`Рекорд: ${highScore}`, 90, 270);
+    ctx.fillText(`Монеты: ${coins}`, 90, 300);
 
     ctx.textAlign = 'center';
     ctx.font = '14px sans-serif';
     ctx.fillText('Тапните для перезапуска', canvas.width / 2, 325);
+  } else if (state.current === state.store) {
+    drawStore();
   }
 }
 
