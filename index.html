@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хомяк на шарике — Бонусы и Рекорды</title>
+    <title>Хомяк на шарике — High Performance</title>
     <style>
         * {
             box-sizing: border-box;
@@ -74,7 +74,7 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(214, 52, 86, 0.3);
-            transition: all 0.2s;
+            transition: transform 0.1s;
             width: 200px;
             text-align: center;
         }
@@ -105,7 +105,6 @@
             cursor: pointer;
             font-size: 12px;
             font-weight: bold;
-            transition: all 0.2s;
         }
         .shop-item.active { border-color: #47a047; background: #eafaf0; }
         .shop-item.bought { border-color: #ff5e7e; }
@@ -144,9 +143,9 @@
 
 <script>
 const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d", { alpha: false }); // Отключение альфы холста для ускорения рендеринга
 
-// Сохранения
+// Сохранения & Данные
 let seedsData = parseInt(localStorage.getItem("hamster_seeds")) || 0;
 let highScore = parseInt(localStorage.getItem("hamster_highscore")) || 0;
 let ownedSkins = JSON.parse(localStorage.getItem("hamster_skins")) || {
@@ -171,36 +170,52 @@ const HAMSTER_COLORS = [
 
 let gameState = "MENU";
 let score = 0;
-let frames = 0;
 let seedsInGame = 0;
-let gameSpeed = 2.5;
+let gameSpeed = 150; // Скорость в пикселях в секунду (для Delta Time)
+let spawnTimer = 0;
 
-// Таймеры бонусов (в миллисекундах)
 let shieldTime = 0;
 let boostTime = 0;
 
-// Массивы объектов
-const seedsList = [];
-const powerupsList = [];
-const particlesPool = [];
-for (let i = 0; i < 25; i++) {
-    particlesPool.push({ x: 0, y: 0, size: 0, vx: 0, vy: 0, alpha: 0, active: false });
-}
+// OBJECT POOLS (Для исключения работы Сборщика Мусора)
+const OBSTACLE_POOL_SIZE = 10;
+const SEED_POOL_SIZE = 10;
+const POWERUP_POOL_SIZE = 5;
+const PARTICLE_POOL_SIZE = 25;
+
+const obstaclePool = Array.from({ length: OBSTACLE_POOL_SIZE }, () => ({
+    x: 0, topHeight: 0, bottomY: 0, width: 50, gap: 140, active: false, passed: false
+}));
+
+const seedPool = Array.from({ length: SEED_POOL_SIZE }, () => ({
+    x: 0, y: 0, radius: 12, active: false
+}));
+
+const powerupPool = Array.from({ length: POWERUP_POOL_SIZE }, () => ({
+    x: 0, y: 0, radius: 16, type: 'SHIELD', active: false
+}));
+
+const particlesPool = Array.from({ length: PARTICLE_POOL_SIZE }, () => ({
+    x: 0, y: 0, size: 0, vx: 0, vy: 0, alpha: 0, active: false
+}));
 
 // Хомяк
 const hamster = {
     x: 80,
     y: 250,
     radius: 20,
-    gravity: 0.35,
-    jumpForce: -6.5,
+    gravity: 1200,      // Адаптировано под секунды
+    jumpForce: -360,     // Адаптировано под секунды
     velocity: 0,
     rotation: 0,
     isPopped: false,
 
     draw() {
+        let hx = this.x | 0;
+        let hy = this.y | 0;
+
         ctx.save();
-        ctx.translate(this.x | 0, this.y | 0);
+        ctx.translate(hx, hy);
 
         // 1. Шарик
         if (!this.isPopped) {
@@ -261,7 +276,6 @@ const hamster = {
         ctx.fillStyle = "#ff5e7e";
         ctx.beginPath(); ctx.arc(0, 25, 1.5, 0, Math.PI * 2); ctx.fill();
 
-        // ВЕСУАЛЬНЫЕ ЭФФЕКТЫ БОНУСОВ
         // Аура Щита
         if (shieldTime > 0 && !this.isPopped) {
             ctx.beginPath();
@@ -281,17 +295,16 @@ const hamster = {
         ctx.restore();
     },
 
-    update() {
+    update(dt) {
         if (boostTime > 0) {
-            // Во время буста персонаж держится в воздухе и плавно возвращается в центр
-            this.velocity = (250 - this.y) * 0.1;
+            this.velocity = (250 - this.y) * 6;
         } else {
-            this.velocity += this.gravity;
+            this.velocity += this.gravity * dt;
         }
 
-        this.y += this.velocity;
+        this.y += this.velocity * dt;
 
-        if (this.isPopped) this.rotation += 0.15;
+        if (this.isPopped) this.rotation += 9 * dt;
 
         if (this.y + 35 >= canvas.height - 40) {
             this.y = canvas.height - 40 - 35;
@@ -315,117 +328,75 @@ const hamster = {
     }
 };
 
-// Семечка
-class Seed {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.radius = 12;
-        this.collected = false;
-    }
+// Функция отрисовки кактуса
+function drawCactus(x, y, w, h) {
+    let rx = x | 0;
+    let ry = y | 0;
 
-    draw() {
-        if (this.collected) return;
-        ctx.save();
-        ctx.translate(this.x | 0, this.y | 0);
+    ctx.save();
+    ctx.fillStyle = "#47a047";
+    ctx.fillRect(rx + 10, ry, w - 20, h);
+
+    ctx.strokeStyle = "#2d662d";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(rx + 18, ry); ctx.lineTo(rx + 18, ry + h);
+    ctx.moveTo(rx + 32, ry); ctx.lineTo(rx + 32, ry + h);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#1b3e1b";
+    ctx.lineWidth = 1;
+    for (let i = 10; i < h - 10; i += 20) {
+        let cy = ry + i;
         ctx.beginPath();
-        ctx.ellipse(0, 0, 6, 10, Math.PI / 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#3a2518"; ctx.fill();
-        ctx.strokeStyle = "#f4c430"; ctx.lineWidth = 1.5; ctx.stroke();
-        ctx.restore();
-    }
-
-    update() {
-        if (gameState === "PLAYING") this.x -= gameSpeed;
-    }
-}
-
-// Бонусы (Power-ups)
-class Powerup {
-    constructor(x, y, type) {
-        this.x = x;
-        this.y = y;
-        this.type = type; // 'SHIELD' или 'BOOST'
-        this.radius = 16;
-        this.collected = false;
-    }
-
-    draw() {
-        if (this.collected) return;
-        ctx.save();
-        ctx.translate(this.x | 0, this.y | 0);
-
-        ctx.beginPath();
-        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.type === 'SHIELD' ? "#3498db" : "#f1c40f";
-        ctx.fill();
-        ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
-
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 14px sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(this.type === 'SHIELD' ? "🛡️" : "⚡", 0, 1);
-
-        ctx.restore();
-    }
-
-    update() {
-        if (gameState === "PLAYING") this.x -= gameSpeed;
-    }
-}
-
-// Препятствия
-const obstacles = [];
-
-class Obstacle {
-    constructor() {
-        this.x = canvas.width;
-        this.gap = 140;
-        this.topHeight = (Math.random() * (canvas.height - this.gap - 160) + 50) | 0;
-        this.bottomY = this.topHeight + this.gap;
-        this.width = 50;
-        this.passed = false;
-    }
-
-    draw() {
-        let rx = this.x | 0;
-        this.drawCactus(rx, 0, this.width, this.topHeight, true);
-        this.drawCactus(rx, this.bottomY, this.width, canvas.height - this.bottomY - 40, false);
-    }
-
-    drawCactus(x, y, w, h, isTop) {
-        ctx.save();
-        ctx.fillStyle = "#47a047";
-        ctx.fillRect(x + 10, y, w - 20, h);
-
-        ctx.strokeStyle = "#2d662d";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x + 18, y); ctx.lineTo(x + 18, y + h);
-        ctx.moveTo(x + 32, y); ctx.lineTo(x + 32, y + h);
+        ctx.moveTo(rx + 10, cy); ctx.lineTo(rx + 4, cy - 4);
+        ctx.moveTo(rx + 40, cy); ctx.lineTo(rx + 46, cy - 4);
         ctx.stroke();
-
-        ctx.strokeStyle = "#1b3e1b";
-        ctx.lineWidth = 1;
-        for (let i = 10; i < h - 10; i += 20) {
-            let cy = y + i;
-            ctx.beginPath();
-            ctx.moveTo(x + 10, cy); ctx.lineTo(x + 4, cy - 4);
-            ctx.moveTo(x + 40, cy); ctx.lineTo(x + 46, cy - 4);
-            ctx.stroke();
-        }
-        ctx.restore();
     }
+    ctx.restore();
+}
 
-    update() {
-        if (gameState === "PLAYING") this.x -= gameSpeed;
+// Управление спавном из пула
+function spawnObstacle() {
+    let obs = obstaclePool.find(o => !o.active);
+    if (!obs) return;
+
+    obs.x = canvas.width;
+    obs.gap = 140;
+    obs.topHeight = (Math.random() * (canvas.height - obs.gap - 160) + 50) | 0;
+    obs.bottomY = obs.topHeight + obs.gap;
+    obs.width = 50;
+    obs.passed = false;
+    obs.active = true;
+
+    let rand = Math.random();
+    if (rand < 0.05) {
+        spawnPowerup(obs.x + 25, obs.topHeight + obs.gap / 2, 'BOOST');
+    } else if (rand < 0.20) {
+        spawnPowerup(obs.x + 25, obs.topHeight + obs.gap / 2, 'SHIELD');
+    } else if (rand < 0.70) {
+        spawnSeed(obs.x + 25, obs.topHeight + obs.gap / 2);
     }
 }
 
-// МЕНЮ И UI
+function spawnSeed(x, y) {
+    let s = seedPool.find(item => !item.active);
+    if (s) {
+        s.x = x; s.y = y; s.active = true;
+    }
+}
+
+function spawnPowerup(x, y, type) {
+    let p = powerupPool.find(item => !item.active);
+    if (p) {
+        p.x = x; p.y = y; p.type = type; p.active = true;
+    }
+}
+
+// UI & Управление
 function updateUI() {
-    document.querySelectorAll(".seeds-val").forEach(el => el.textContent = seedsData);
+    const val = seedsData.toString();
+    document.querySelectorAll(".seeds-val").forEach(el => el.textContent = val);
     localStorage.setItem("hamster_seeds", seedsData);
     localStorage.setItem("hamster_highscore", highScore);
     localStorage.setItem("hamster_skins", JSON.stringify(ownedSkins));
@@ -503,12 +474,12 @@ function triggerPop() {
     if (gameState === "PLAYING") {
         gameState = "DYING";
         hamster.isPopped = true;
-        hamster.velocity = -4;
+        hamster.velocity = -240;
         
         for (let i = 0; i < 20; i++) {
             particlesPool[i] = {
                 x: hamster.x, y: hamster.y - 20, size: Math.random() * 6 + 4,
-                vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12,
+                vx: (Math.random() - 0.5) * 400, vy: (Math.random() - 0.5) * 400,
                 alpha: 1, active: true
             };
         }
@@ -517,17 +488,13 @@ function triggerPop() {
 
 function finishGameOver() {
     gameState = "GAMEOVER";
-    if (score > highScore) {
-        highScore = score;
-    }
+    if (score > highScore) highScore = score;
     seedsData += seedsInGame;
     updateUI();
 }
 
 function checkCollision(obs) {
-    // Если активен щит или буст — коллизия не просчитывается
     if (shieldTime > 0 || boostTime > 0) return false;
-
     if (hamster.x + hamster.radius > obs.x && hamster.x - hamster.radius < obs.x + obs.width) {
         if (hamster.y - 30 < obs.topHeight || hamster.y + 35 > obs.bottomY) return true;
     }
@@ -536,129 +503,151 @@ function checkCollision(obs) {
 
 function resetGame() {
     hamster.reset();
-    obstacles.length = 0;
-    seedsList.length = 0;
-    powerupsList.length = 0;
+    obstaclePool.forEach(o => o.active = false);
+    seedPool.forEach(s => s.active = false);
+    powerupPool.forEach(p => p.active = false);
+    particlesPool.forEach(p => p.active = false);
+    
     score = 0;
     seedsInGame = 0;
-    frames = 0;
+    spawnTimer = 0;
     shieldTime = 0;
     boostTime = 0;
-    gameSpeed = 2.5;
+    gameSpeed = 150;
     gameState = "PLAYING";
 }
 
 let lastTime = performance.now();
 
-// Главный видеоцикл
+// ГЛАВНЫЙ ОПТИМИЗИРОВАННЫЙ ИГРОВОЙ ЦИКЛ
 function loop(now) {
     let dt = (now - lastTime) / 1000;
+    if (dt > 0.1) dt = 0.1; // Ограничение скачков при смене вкладок браузера
     lastTime = now;
 
-    // Таймеры бонусов
     if (gameState === "PLAYING") {
         if (shieldTime > 0) shieldTime -= dt;
         if (boostTime > 0) {
             boostTime -= dt;
-            gameSpeed = 6.0; // Супер-скорость при бусте
+            gameSpeed = 380;
         } else {
-            gameSpeed = 2.5;
+            gameSpeed = 150;
+        }
+
+        spawnTimer += dt;
+        let spawnInterval = boostTime > 0 ? 0.6 : 1.6;
+        if (spawnTimer >= spawnInterval) {
+            spawnTimer = 0;
+            spawnObstacle();
         }
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Фон
+    ctx.fillStyle = "#fceade";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Окно спальни
     ctx.fillStyle = "#87ceeb"; ctx.fillRect(250, 80, 100, 120);
     ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 6; ctx.strokeRect(250, 80, 100, 120);
 
     if (gameState === "PLAYING" || gameState === "DYING" || gameState === "GAMEOVER") {
-        hamster.update();
+        hamster.update(dt);
 
-        if (gameState === "PLAYING") {
-            // Спавн препятствий
-            let spawnInterval = boostTime > 0 ? 40 : 100;
-            if (frames % spawnInterval === 0) {
-                const obs = new Obstacle();
-                obstacles.push(obs);
-
-                let rand = Math.random();
-                // Спавн Ускорения (5% шанс)
-                if (rand < 0.05) {
-                    powerupsList.push(new Powerup(obs.x + 25, obs.topHeight + obs.gap / 2, 'BOOST'));
-                }
-                // Спавн Щита (15% шанс)
-                else if (rand < 0.20) {
-                    powerupsList.push(new Powerup(obs.x + 25, obs.topHeight + obs.gap / 2, 'SHIELD'));
-                }
-                // Спавн Семечки (50% шанс)
-                else if (rand < 0.70) {
-                    seedsList.push(new Seed(obs.x + 25, obs.topHeight + obs.gap / 2));
-                }
-            }
-            frames++;
-        }
-
-        // Препятствия
-        for (let i = obstacles.length - 1; i >= 0; i--) {
-            obstacles[i].update();
-            obstacles[i].draw();
+        // Обновление и отрисовка препятствий
+        for (let i = 0; i < OBSTACLE_POOL_SIZE; i++) {
+            let obs = obstaclePool[i];
+            if (!obs.active) continue;
 
             if (gameState === "PLAYING") {
-                if (!obstacles[i].passed && obstacles[i].x + obstacles[i].width < hamster.x) {
+                obs.x -= gameSpeed * dt;
+                if (!obs.passed && obs.x + obs.width < hamster.x) {
                     score++;
-                    obstacles[i].passed = true;
+                    obs.passed = true;
                 }
-                if (checkCollision(obstacles[i])) triggerPop();
+                if (checkCollision(obs)) triggerPop();
+                if (obs.x + obs.width < 0) obs.active = false;
             }
-            if (obstacles[i].x + obstacles[i].width < 0) obstacles.splice(i, 1);
+
+            drawCactus(obs.x, 0, obs.width, obs.topHeight);
+            drawCactus(obs.x, obs.bottomY, obs.width, canvas.height - obs.bottomY - 40);
         }
 
-        // Семечки
-        for (let i = seedsList.length - 1; i >= 0; i--) {
-            seedsList[i].update();
-            seedsList[i].draw();
+        // Обновление и отрисовка семечек
+        for (let i = 0; i < SEED_POOL_SIZE; i++) {
+            let s = seedPool[i];
+            if (!s.active) continue;
 
-            if (gameState === "PLAYING" && !seedsList[i].collected) {
-                let dist = Math.hypot(hamster.x - seedsList[i].x, hamster.y - seedsList[i].y);
-                if (dist < hamster.radius + seedsList[i].radius) {
-                    seedsList[i].collected = true;
+            if (gameState === "PLAYING") {
+                s.x -= gameSpeed * dt;
+                let dist = Math.hypot(hamster.x - s.x, hamster.y - s.y);
+                if (dist < hamster.radius + s.radius) {
+                    s.active = false;
                     seedsInGame += 5;
                 }
+                if (s.x < -20) s.active = false;
             }
-            if (seedsList[i].x < -20) seedsList.splice(i, 1);
+
+            if (s.active) {
+                ctx.save();
+                ctx.translate(s.x | 0, s.y | 0);
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 6, 10, Math.PI / 4, 0, Math.PI * 2);
+                ctx.fillStyle = "#3a2518"; ctx.fill();
+                ctx.strokeStyle = "#f4c430"; ctx.lineWidth = 1.5; ctx.stroke();
+                ctx.restore();
+            }
         }
 
-        // Бонусы
-        for (let i = powerupsList.length - 1; i >= 0; i--) {
-            powerupsList[i].update();
-            powerupsList[i].draw();
+        // Обновление и отрисовка бонусов
+        for (let i = 0; i < POWERUP_POOL_SIZE; i++) {
+            let p = powerupPool[i];
+            if (!p.active) continue;
 
-            if (gameState === "PLAYING" && !powerupsList[i].collected) {
-                let dist = Math.hypot(hamster.x - powerupsList[i].x, hamster.y - powerupsList[i].y);
-                if (dist < hamster.radius + powerupsList[i].radius) {
-                    powerupsList[i].collected = true;
-                    if (powerupsList[i].type === 'SHIELD') {
-                        shieldTime = 5.0; // 5 секунд неуязвимости
-                    } else if (powerupsList[i].type === 'BOOST') {
-                        boostTime = 5.0;  // 5 секунд гиперантигравитационного буста
-                    }
+            if (gameState === "PLAYING") {
+                p.x -= gameSpeed * dt;
+                let dist = Math.hypot(hamster.x - p.x, hamster.y - p.y);
+                if (dist < hamster.radius + p.radius) {
+                    p.active = false;
+                    if (p.type === 'SHIELD') shieldTime = 5.0;
+                    else if (p.type === 'BOOST') boostTime = 5.0;
                 }
+                if (p.x < -20) p.active = false;
             }
-            if (powerupsList[i].x < -20) powerupsList.splice(i, 1);
+
+            if (p.active) {
+                ctx.save();
+                ctx.translate(p.x | 0, p.y | 0);
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.type === 'SHIELD' ? "#3498db" : "#f1c40f";
+                ctx.fill();
+                ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = "#fff"; ctx.font = "bold 14px sans-serif";
+                ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.fillText(p.type === 'SHIELD' ? "🛡️" : "⚡", 0, 1);
+                ctx.restore();
+            }
         }
 
-        // Осколки
-        particlesPool.forEach(p => {
-            if (!p.active) return;
-            p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.alpha -= 0.02;
-            if (p.alpha <= 0) p.active = false;
-            ctx.save();
-            ctx.globalAlpha = Math.max(0, p.alpha);
-            ctx.fillStyle = currentBalloon;
-            ctx.beginPath(); ctx.arc(p.x | 0, p.y | 0, p.size, 0, Math.PI * 2); ctx.fill();
-            ctx.restore();
-        });
+        // Частицы
+        for (let i = 0; i < PARTICLE_POOL_SIZE; i++) {
+            let p = particlesPool[i];
+            if (!p.active) continue;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vy += 400 * dt;
+            p.alpha -= 0.8 * dt;
+
+            if (p.alpha <= 0) {
+                p.active = false;
+            } else {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                ctx.fillStyle = currentBalloon;
+                ctx.beginPath(); ctx.arc(p.x | 0, p.y | 0, p.size, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+        }
     }
 
     if (gameState !== "MENU") hamster.draw();
@@ -669,13 +658,11 @@ function loop(now) {
 
 function drawUI() {
     if (gameState === "PLAYING" || gameState === "DYING") {
-        // СЧЕТ СЛЕВА ВВЕРХУ
         ctx.fillStyle = "#4a3525";
         ctx.font = "bold 20px 'Segoe UI', sans-serif";
         ctx.textAlign = "left";
         ctx.fillText(`Счет: ${score}`, 20, 35);
 
-        // МОНЕТЫ И РЕКОРД СПРАВА ВВЕРХУ
         ctx.textAlign = "right";
         ctx.fillText(`🌻 ${seedsData + seedsInGame}`, 380, 35);
         
@@ -683,7 +670,6 @@ function drawUI() {
         ctx.fillStyle = "#8d5b4c";
         ctx.fillText(`Рекорд 🏆: ${highScore}`, 380, 58);
 
-        // Полоски таймеров активных бонусов
         let barY = 20;
         if (shieldTime > 0) {
             ctx.fillStyle = "rgba(52, 152, 219, 0.8)";
