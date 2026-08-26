@@ -107,6 +107,20 @@ const sound = {
     gain.connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + 0.15);
+  },
+  powerup() {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.2);
   }
 };
 
@@ -126,6 +140,10 @@ let highScore = parseInt(localStorage.getItem('pig_highscore')) || 0;
 let coins = parseInt(localStorage.getItem('pig_coins')) || 0;
 let equippedSkin = localStorage.getItem('pig_equippedSkin') || 'default';
 let ownedSkins = JSON.parse(localStorage.getItem('pig_ownedSkins')) || ['default'];
+
+// --- БОНУСЫ (POWER-UPS) ---
+let shieldActive = false;
+let magnetTimer = 0;
 
 // --- СКИНИ ДЛЯ СВИНЬИ ---
 const skins = [
@@ -195,9 +213,13 @@ function handleInput(clientX, clientY) {
       break;
     case state.gameOver:
       pipes.reset();
+      powerups.reset();
+      collectibles.reset();
       pig.reset();
       score = 0;
       gameSpeed = 2;
+      shieldActive = false;
+      magnetTimer = 0;
       state.current = state.getReady;
       break;
   }
@@ -299,10 +321,14 @@ const pig = {
 
       if (this.y + this.r >= canvas.height - ground.h) {
         this.y = canvas.height - ground.h - this.r;
-        if (state.current === state.game) {
+        if (shieldActive) {
+          shieldActive = false;
+          this.velocity = -this.jump;
           sound.hit();
+        } else {
+          if (state.current === state.game) sound.hit();
+          state.current = state.gameOver;
         }
-        state.current = state.gameOver;
       }
 
       if (this.velocity < 0) {
@@ -312,6 +338,8 @@ const pig = {
         if (this.rotation > 1.1) this.rotation = 1.1;
       }
     }
+
+    if (magnetTimer > 0) magnetTimer--;
   },
 
   draw(customX, customY, customSkinId) {
@@ -382,7 +410,122 @@ const pig = {
     ctx.arc(-16, 2, 4, 0, Math.PI);
     ctx.stroke();
 
+    // Эффект Щита
+    if (customX === undefined && shieldActive) {
+      ctx.strokeStyle = 'rgba(52, 152, 219, 0.8)';
+      ctx.fillStyle = 'rgba(52, 152, 219, 0.25)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.r + 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
     ctx.restore();
+  }
+};
+
+// Спавн монеток
+const collectibles = {
+  items: [],
+  reset() { this.items = []; },
+  spawn(x, y) {
+    this.items.push({ x: x, y: y, r: 10, collected: false });
+  },
+  update() {
+    if (state.current !== state.game) return;
+    this.items.forEach((item, index) => {
+      item.x -= gameSpeed;
+
+      // Логика Магнита
+      if (magnetTimer > 0 && !item.collected) {
+        const dx = pig.x - item.x;
+        const dy = pig.y - item.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 160) {
+          item.x += (dx / dist) * 7;
+          item.y += (dy / dist) * 7;
+        }
+      }
+
+      // Подбор монеты
+      const distToPig = Math.hypot(pig.x - item.x, pig.y - item.y);
+      if (distToPig < pig.r + item.r && !item.collected) {
+        item.collected = true;
+        coins++;
+        localStorage.setItem('pig_coins', coins);
+        sound.score();
+      }
+
+      if (item.x + item.r < 0 || item.collected) {
+        this.items.splice(index, 1);
+      }
+    });
+  },
+  draw() {
+    this.items.forEach(item => {
+      ctx.fillStyle = '#F1C40F';
+      ctx.beginPath();
+      ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#D4AC0D';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#B7950B';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('$', item.x, item.y + 4);
+    });
+  }
+};
+
+// Спавн Бонусов
+const powerups = {
+  items: [],
+  reset() { this.items = []; },
+  spawn(x, y) {
+    const type = Math.random() < 0.5 ? 'shield' : 'magnet';
+    this.items.push({ x: x, y: y, r: 14, type: type });
+  },
+  update() {
+    if (state.current !== state.game) return;
+    this.items.forEach((p, index) => {
+      p.x -= gameSpeed;
+
+      const dist = Math.hypot(pig.x - p.x, pig.y - p.y);
+      if (dist < pig.r + p.r) {
+        if (p.type === 'shield') {
+          shieldActive = true;
+        } else if (p.type === 'magnet') {
+          magnetTimer = 480; // ~8 секунд при 60 FPS
+        }
+        sound.powerup();
+        this.items.splice(index, 1);
+        return;
+      }
+
+      if (p.x + p.r < 0) {
+        this.items.splice(index, 1);
+      }
+    });
+  },
+  draw() {
+    this.items.forEach(p => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.type === 'shield' ? '#3498DB' : '#E74C3C';
+      ctx.fill();
+      ctx.strokeStyle = '#FFF';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#FFF';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(p.type === 'shield' ? '🛡️' : '🧲', p.x, p.y + 4);
+      ctx.restore();
+    });
   }
 };
 
@@ -399,7 +542,6 @@ const pipes = {
   update() {
     if (state.current !== state.game) return;
 
-    // Ускорение каждые 10 очков
     gameSpeed = 2 + Math.floor(score / 10) * 0.4;
     const spawnInterval = Math.max(70, Math.floor(120 - (gameSpeed - 2) * 15));
 
@@ -408,8 +550,19 @@ const pipes = {
       const maxY = canvas.height - ground.h - this.gap - 80;
       const topY = -Math.floor(Math.random() * (maxY - minY + 1) + minY);
 
+      const pipeX = canvas.width;
+      const gapCenterY = topY + 400 + this.gap / 2;
+
+      // Спавн бонусов или монеток внутри прохода
+      const rand = Math.random();
+      if (rand < 0.25) {
+        powerups.spawn(pipeX + this.w / 2, gapCenterY);
+      } else if (rand < 0.75) {
+        collectibles.spawn(pipeX + this.w / 2, gapCenterY);
+      }
+
       this.items.push({
-        x: canvas.width,
+        x: pipeX,
         top: topY,
         passed: false
       });
@@ -420,16 +573,21 @@ const pipes = {
 
       const bottomY = p.top + 400 + this.gap;
 
+      // Проверка столкновения
       if ((pig.x + pig.r > p.x && pig.x - pig.r < p.x + this.w && pig.y - pig.r < p.top + 400) ||
           (pig.x + pig.r > p.x && pig.x - pig.r < p.x + this.w && pig.y + pig.r > bottomY)) {
-        sound.hit();
-        state.current = state.gameOver;
+        if (shieldActive) {
+          shieldActive = false;
+          sound.hit();
+          p.x = -100; // Разрушаем трубу
+        } else {
+          sound.hit();
+          state.current = state.gameOver;
+        }
       }
 
       if (p.x + this.w < pig.x && !p.passed) {
         score++;
-        coins++;
-        localStorage.setItem('pig_coins', coins);
         sound.score();
         p.passed = true;
         if (score > highScore) {
@@ -499,6 +657,41 @@ function drawTopRightCoins() {
   ctx.textAlign = 'right';
   ctx.fillText(coins, x, y + 6);
   ctx.strokeText(coins, x, y + 6);
+}
+
+// Отрисовка активных бонусов
+function drawActivePowerups() {
+  let offset = 20;
+
+  if (shieldActive) {
+    ctx.fillStyle = '#3498DB';
+    ctx.beginPath();
+    ctx.arc(offset, 25, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🛡️', offset, 29);
+    offset += 32;
+  }
+
+  if (magnetTimer > 0) {
+    const secondsLeft = Math.ceil(magnetTimer / 60);
+    ctx.fillStyle = '#E74C3C';
+    ctx.beginPath();
+    ctx.arc(offset, 25, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${secondsLeft}s`, offset, 29);
+  }
 }
 
 // Отрисовка магазина
@@ -576,7 +769,9 @@ function drawUI() {
     ctx.fillText(score, canvas.width / 2, 50);
     ctx.strokeText(score, canvas.width / 2, 50);
 
-    // Отображение уровня сложности/ускорения
+    drawTopRightCoins();
+    drawActivePowerups();
+
     if (score >= 10) {
       ctx.font = 'bold 14px sans-serif';
       ctx.fillText(`Скорость: x${(gameSpeed / 2).toFixed(1)}`, canvas.width / 2, 75);
@@ -590,7 +785,6 @@ function drawUI() {
     ctx.font = 'bold 20px sans-serif';
     ctx.fillText('ТАПНИТЕ ДЛЯ СТАРТА', canvas.width / 2, 180);
 
-    // Рекорд в главном меню
     ctx.fillStyle = '#F39C12';
     ctx.font = 'bold 22px sans-serif';
     ctx.fillText(`РЕКОРД: ${highScore}`, canvas.width / 2, 280);
@@ -598,7 +792,6 @@ function drawUI() {
 
     drawTopRightCoins();
 
-    // Кнопка Магазина
     ctx.fillStyle = '#E67E22';
     ctx.fillRect(shopBtn.x, shopBtn.y, shopBtn.w, shopBtn.h);
     ctx.strokeStyle = '#000';
@@ -641,6 +834,12 @@ function loop() {
 
   pipes.update();
   pipes.draw();
+
+  collectibles.update();
+  collectibles.draw();
+
+  powerups.update();
+  powerups.draw();
 
   ground.update();
   ground.draw();
