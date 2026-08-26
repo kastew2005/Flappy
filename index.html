@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хомяк на шарике — High Performance</title>
+    <title>Хомяк на шарике — High HD Graphics</title>
     <style>
         * {
             box-sizing: border-box;
@@ -11,35 +11,23 @@
             padding: 0;
         }
         body {
-            background-color: #1a1a1a;
+            background-color: #0f121d;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
             user-select: none;
         }
         #game-container {
             position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            border-radius: 16px;
             overflow: hidden;
             width: 400px;
             height: 600px;
-            background: #fceade;
-            background-image: repeating-linear-gradient(90deg, transparent, transparent 28px, #f7d6c1 28px, #f7d6c1 30px);
-        }
-        #game-container::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 40px;
-            background: #8d5b4c;
-            border-top: 5px solid #6d4134;
-            pointer-events: none;
+            background: #1a1a1a;
         }
         canvas {
             display: block;
@@ -56,29 +44,38 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(253, 245, 235, 0.95);
+            background: rgba(25, 20, 35, 0.92);
+            backdrop-filter: blur(6px);
             z-index: 10;
         }
         .hidden { display: none !important; }
-        h1 { color: #d63456; font-size: 28px; margin-bottom: 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
-        h2 { color: #4a3525; font-size: 20px; margin: 15px 0 10px 0; }
+        h1 {
+            color: #ff5e7e;
+            font-size: 32px;
+            margin-bottom: 25px;
+            text-shadow: 0 4px 10px rgba(255, 94, 126, 0.4);
+            font-weight: 800;
+        }
+        h2 { color: #fceade; font-size: 18px; margin: 15px 0 10px 0; }
         
         .btn {
-            background: #ff5e7e;
+            background: linear-gradient(135deg, #ff5e7e, #e63956);
             color: white;
             border: none;
-            padding: 12px 30px;
+            padding: 14px 30px;
             margin: 8px;
-            border-radius: 25px;
+            border-radius: 30px;
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(214, 52, 86, 0.3);
-            transition: transform 0.1s;
-            width: 200px;
+            box-shadow: 0 6px 15px rgba(230, 57, 86, 0.4);
+            transition: all 0.15s ease;
+            width: 210px;
             text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .btn:hover { background: #d63456; transform: translateY(-2px); }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(230, 57, 86, 0.6); }
         .btn:active { transform: translateY(0); }
         
         .seeds-counter {
@@ -87,28 +84,31 @@
             right: 15px;
             font-weight: bold;
             font-size: 16px;
-            color: #4a3525;
-            background: #fff0db;
-            padding: 5px 12px;
-            border-radius: 15px;
-            border: 2px solid #d49b4b;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(4px);
         }
 
         .shop-section { width: 90%; max-height: 400px; overflow-y: auto; text-align: center; }
-        .shop-grid { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .shop-grid { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         .shop-item {
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            padding: 8px;
-            width: 90px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px;
+            width: 95px;
             cursor: pointer;
             font-size: 12px;
+            color: #fff;
             font-weight: bold;
+            transition: all 0.2s;
         }
-        .shop-item.active { border-color: #47a047; background: #eafaf0; }
+        .shop-item.active { border-color: #2ecc71; background: rgba(46, 204, 113, 0.2); }
         .shop-item.bought { border-color: #ff5e7e; }
-        .item-preview { width: 30px; height: 30px; border-radius: 50%; margin: 5px auto; }
+        .item-preview { width: 34px; height: 34px; border-radius: 50%; margin: 6px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
@@ -121,7 +121,7 @@
         <h1>Хомяк на шарике</h1>
         <div class="seeds-counter">🌻 <span class="seeds-val">0</span></div>
         <button class="btn" onclick="startGame()">Играть</button>
-        <button class="btn" style="background: #47a047;" onclick="openShop()">Магазин</button>
+        <button class="btn" style="background: linear-gradient(135deg, #2ecc71, #27ae60);" onclick="openShop()">Магазин</button>
     </div>
 
     <!-- МАГАЗИН -->
@@ -143,9 +143,9 @@
 
 <script>
 const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d", { alpha: false }); // Отключение альфы холста для ускорения рендеринга
+const ctx = canvas.getContext("2d");
 
-// Сохранения & Данные
+// Сохранения
 let seedsData = parseInt(localStorage.getItem("hamster_seeds")) || 0;
 let highScore = parseInt(localStorage.getItem("hamster_highscore")) || 0;
 let ownedSkins = JSON.parse(localStorage.getItem("hamster_skins")) || {
@@ -157,38 +157,39 @@ let currentHamster = localStorage.getItem("hamster_cur_hamster") || "#d49b4b";
 
 const BALLOON_COLORS = [
     { name: "Розовый", color: "#ff5e7e", price: 0 },
-    { name: "Зеленый", color: "#47a047", price: 15 },
-    { name: "Синий", color: "#3498db", price: 15 }
+    { name: "Зеленый", color: "#2ecc71", price: 15 },
+    { name: "Синий", color: "#3498db", price: 15 },
+    { name: "Золотой", color: "#f1c40f", price: 30 }
 ];
 
 const HAMSTER_COLORS = [
     { name: "Рыжий", color: "#d49b4b", price: 0 },
-    { name: "Черный", color: "#333333", price: 20 },
-    { name: "Серый", color: "#888888", price: 20 },
-    { name: "Белый", color: "#e6e6e6", price: 20 }
+    { name: "Темный", color: "#34495e", price: 20 },
+    { name: "Серый", color: "#7f8c8d", price: 20 },
+    { name: "Персик", color: "#e67e22", price: 20 }
 ];
 
 let gameState = "MENU";
 let score = 0;
 let seedsInGame = 0;
-let gameSpeed = 150; // Скорость в пикселях в секунду (для Delta Time)
+let gameSpeed = 160;
 let spawnTimer = 0;
 
 let shieldTime = 0;
 let boostTime = 0;
 
-// OBJECT POOLS (Для исключения работы Сборщика Мусора)
-const OBSTACLE_POOL_SIZE = 10;
-const SEED_POOL_SIZE = 10;
-const POWERUP_POOL_SIZE = 5;
-const PARTICLE_POOL_SIZE = 25;
+// Object Pools
+const OBSTACLE_POOL_SIZE = 8;
+const SEED_POOL_SIZE = 8;
+const POWERUP_POOL_SIZE = 4;
+const PARTICLE_POOL_SIZE = 30;
 
 const obstaclePool = Array.from({ length: OBSTACLE_POOL_SIZE }, () => ({
-    x: 0, topHeight: 0, bottomY: 0, width: 50, gap: 140, active: false, passed: false
+    x: 0, topHeight: 0, bottomY: 0, width: 54, gap: 145, active: false, passed: false
 }));
 
 const seedPool = Array.from({ length: SEED_POOL_SIZE }, () => ({
-    x: 0, y: 0, radius: 12, active: false
+    x: 0, y: 0, radius: 12, rotation: 0, active: false
 }));
 
 const powerupPool = Array.from({ length: POWERUP_POOL_SIZE }, () => ({
@@ -199,13 +200,13 @@ const particlesPool = Array.from({ length: PARTICLE_POOL_SIZE }, () => ({
     x: 0, y: 0, size: 0, vx: 0, vy: 0, alpha: 0, active: false
 }));
 
-// Хомяк
+// Детализированный хомяк
 const hamster = {
     x: 80,
     y: 250,
     radius: 20,
-    gravity: 1200,      // Адаптировано под секунды
-    jumpForce: -360,     // Адаптировано под секунды
+    gravity: 1100,
+    jumpForce: -350,
     velocity: 0,
     rotation: 0,
     isPopped: false,
@@ -217,78 +218,130 @@ const hamster = {
         ctx.save();
         ctx.translate(hx, hy);
 
-        // 1. Шарик
+        let tilt = Math.min(Math.max(this.velocity / 600, -0.4), 0.4);
+        if (!this.isPopped) ctx.rotate(tilt);
+
+        // 1. Воздушный шар
         if (!this.isPopped) {
+            // Тень под шаром
+            let bgGrad = ctx.createRadialGradient(-5, -28, 4, 0, -20, 26);
+            bgGrad.addColorStop(0, '#ffffff');
+            bgGrad.addColorStop(0.5, currentBalloon);
+            bgGrad.addColorStop(1, adjustColor(currentBalloon, -40));
+
             ctx.beginPath();
-            ctx.arc(0, -20, 22, 0, Math.PI * 2);
-            ctx.fillStyle = currentBalloon;
+            ctx.arc(0, -22, 24, 0, Math.PI * 2);
+            ctx.fillStyle = bgGrad;
             ctx.fill();
             ctx.lineWidth = 2;
-            ctx.strokeStyle = "#333";
+            ctx.strokeStyle = '#222';
             ctx.stroke();
 
-            // Блик
+            // Блик на шаре
             ctx.beginPath();
-            ctx.arc(-7, -27, 5, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+            ctx.ellipse(-8, -32, 6, 12, Math.PI / 4, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
             ctx.fill();
 
-            // Нить
+            // Узел шарика
             ctx.beginPath();
-            ctx.moveTo(0, 2); ctx.lineTo(0, 15);
-            ctx.strokeStyle = "#777"; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.moveTo(-4, 2); ctx.lineTo(4, 2); ctx.lineTo(0, -3);
+            ctx.closePath();
+            ctx.fillStyle = adjustColor(currentBalloon, -30);
+            ctx.fill();
+
+            // Веревочка
+            ctx.beginPath();
+            ctx.moveTo(0, 2);
+            ctx.quadraticCurveTo(5, 10, 0, 18);
+            ctx.strokeStyle = "#555";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
         } else {
             ctx.rotate(this.rotation);
         }
 
-        // 2. Тело хомяка
-        ctx.beginPath();
-        ctx.ellipse(0, 25, 14, 12, 0, 0, Math.PI * 2);
-        ctx.fillStyle = currentHamster; ctx.fill();
-        ctx.strokeStyle = "#222"; ctx.lineWidth = 1.5; ctx.stroke();
+        // 2. Тело хомяка (Детализированный градиент шерсти)
+        let bodyGrad = ctx.createRadialGradient(-4, 25, 5, 0, 28, 16);
+        bodyGrad.addColorStop(0, adjustColor(currentHamster, 20));
+        bodyGrad.addColorStop(0.8, currentHamster);
+        bodyGrad.addColorStop(1, adjustColor(currentHamster, -40));
 
+        // Задняя лапка
+        ctx.fillStyle = adjustColor(currentHamster, -30);
+        ctx.beginPath(); ctx.ellipse(-12, 36, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(12, 36, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+
+        // Основное туловище
         ctx.beginPath();
-        ctx.ellipse(0, 27, 8, 7, 0, 0, Math.PI * 2);
-        ctx.fillStyle = "#fff0db"; ctx.fill();
+        ctx.ellipse(0, 28, 16, 14, 0, 0, Math.PI * 2);
+        ctx.fillStyle = bodyGrad;
+        ctx.fill();
+        ctx.strokeStyle = "#2c2c2c"; ctx.lineWidth = 1.8; ctx.stroke();
+
+        // Белый животик
+        let bellyGrad = ctx.createLinearGradient(0, 20, 0, 38);
+        bellyGrad.addColorStop(0, "#ffffff");
+        bellyGrad.addColorStop(1, "#fff0db");
+        ctx.beginPath();
+        ctx.ellipse(0, 30, 10, 8, 0, 0, Math.PI * 2);
+        ctx.fillStyle = bellyGrad; ctx.fill();
 
         // Ушки
         ctx.fillStyle = currentHamster;
-        ctx.beginPath(); ctx.arc(-10, 16, 4, 0, Math.PI * 2); ctx.arc(10, 16, 4, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = "#222"; ctx.stroke();
+        ctx.beginPath(); ctx.arc(-11, 16, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(11, 16, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        
+        ctx.fillStyle = "#ffbfa3";
+        ctx.beginPath(); ctx.arc(-11, 16, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(11, 16, 2.5, 0, Math.PI * 2); ctx.fill();
+
+        // Передние лапки
+        ctx.fillStyle = "#fff0db";
+        ctx.beginPath(); ctx.ellipse(-6, 32, 3.5, 2.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(6, 32, 3.5, 2.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
         // Щечки
-        ctx.fillStyle = "#ffbfa3";
-        ctx.beginPath(); ctx.arc(-11, 25, 5, 0, Math.PI * 2); ctx.arc(11, 25, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "rgba(255, 120, 150, 0.4)";
+        ctx.beginPath(); ctx.arc(-11, 27, 4.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(11, 27, 4.5, 0, Math.PI * 2); ctx.fill();
 
-        // Глаза
+        // Глазки
         if (this.isPopped) {
-            ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
+            ctx.strokeStyle = "#111"; ctx.lineWidth = 2.5;
             ctx.beginPath();
-            ctx.moveTo(-7, 20); ctx.lineTo(-3, 24); ctx.moveTo(-3, 20); ctx.lineTo(-7, 24);
-            ctx.moveTo(3, 20); ctx.lineTo(7, 24); ctx.moveTo(7, 20); ctx.lineTo(3, 24);
+            ctx.moveTo(-7, 21); ctx.lineTo(-3, 25); ctx.moveTo(-3, 21); ctx.lineTo(-7, 25);
+            ctx.moveTo(3, 21); ctx.lineTo(7, 25); ctx.moveTo(7, 21); ctx.lineTo(3, 25);
             ctx.stroke();
         } else {
-            ctx.fillStyle = "#000";
-            ctx.beginPath(); ctx.arc(-5, 22, 2, 0, Math.PI * 2); ctx.arc(5, 22, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#111";
+            ctx.beginPath(); ctx.arc(-5, 23, 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(5, 23, 2.5, 0, Math.PI * 2); ctx.fill();
+            // Блики в глазах
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.arc(-6, 22, 0.8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(4, 22, 0.8, 0, Math.PI * 2); ctx.fill();
         }
 
-        // Носик
-        ctx.fillStyle = "#ff5e7e";
-        ctx.beginPath(); ctx.arc(0, 25, 1.5, 0, Math.PI * 2); ctx.fill();
+        // Носик и ротик
+        ctx.fillStyle = "#ff4777";
+        ctx.beginPath(); ctx.arc(0, 26, 1.8, 0, Math.PI * 2); ctx.fill();
 
-        // Аура Щита
+        // Эффекты усиления
         if (shieldTime > 0 && !this.isPopped) {
             ctx.beginPath();
-            ctx.arc(0, 5, 38, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(52, 152, 219, 0.3)"; ctx.fill();
+            ctx.arc(0, 5, 42, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(52, 152, 219, 0.25)"; ctx.fill();
             ctx.strokeStyle = "#3498db"; ctx.lineWidth = 3; ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(0, 5, 46, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(52, 152, 219, 0.4)"; ctx.lineWidth = 1.5; ctx.stroke();
         }
-        
-        // Шлейф Ускорения
+
         if (boostTime > 0 && !this.isPopped) {
             ctx.beginPath();
-            ctx.arc(0, 5, 42, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(241, 196, 15, 0.3)"; ctx.fill();
+            ctx.arc(0, 5, 44, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(241, 196, 15, 0.25)"; ctx.fill();
             ctx.strokeStyle = "#f1c40f"; ctx.lineWidth = 3; ctx.stroke();
         }
 
@@ -297,14 +350,14 @@ const hamster = {
 
     update(dt) {
         if (boostTime > 0) {
-            this.velocity = (250 - this.y) * 6;
+            this.velocity = (240 - this.y) * 7;
         } else {
             this.velocity += this.gravity * dt;
         }
 
         this.y += this.velocity * dt;
 
-        if (this.isPopped) this.rotation += 9 * dt;
+        if (this.isPopped) this.rotation += 10 * dt;
 
         if (this.y + 35 >= canvas.height - 40) {
             this.y = canvas.height - 40 - 35;
@@ -328,61 +381,96 @@ const hamster = {
     }
 };
 
-// Функция отрисовки кактуса
-function drawCactus(x, y, w, h) {
+// Вспомогательная функция для осветления/темнения цвета
+function adjustColor(hex, lum) {
+    hex = String(hex).replace(/[^0-9a-f]/gi, '');
+    if (hex.length < 6) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    let rgb = "#", c, i;
+    for (i = 0; i < 3; i++) {
+        c = parseInt(hex.substr(i*2,2), 16);
+        c = Math.round(Math.min(Math.max(0, c + (c * (lum / 100))), 255)).toString(16);
+        rgb += ("00"+c).substr(c.length);
+    }
+    return rgb;
+}
+
+// Детализированные кактусы
+function drawCactusHD(x, y, w, h, isTop) {
     let rx = x | 0;
     let ry = y | 0;
 
     ctx.save();
-    ctx.fillStyle = "#47a047";
-    ctx.fillRect(rx + 10, ry, w - 20, h);
+    
+    // Градиент тела кактуса
+    let grad = ctx.createLinearGradient(rx, 0, rx + w, 0);
+    grad.addColorStop(0, '#1e5128');
+    grad.addColorStop(0.3, '#4e9f3d');
+    grad.addColorStop(0.7, '#2e7d32');
+    grad.addColorStop(1, '#1b4332');
 
-    ctx.strokeStyle = "#2d662d";
+    ctx.fillStyle = grad;
+    ctx.fillRect(rx, ry, w, h);
+
+    // Закругленный наконечник кактуса
+    ctx.beginPath();
+    let capY = isTop ? ry + h : ry;
+    ctx.ellipse(rx + w / 2, capY, w / 2, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ребра и текстура
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(rx + 18, ry); ctx.lineTo(rx + 18, ry + h);
-    ctx.moveTo(rx + 32, ry); ctx.lineTo(rx + 32, ry + h);
+    ctx.moveTo(rx + 12, ry); ctx.lineTo(rx + 12, ry + h);
+    ctx.moveTo(rx + 27, ry); ctx.lineTo(rx + 27, ry + h);
+    ctx.moveTo(rx + 42, ry); ctx.lineTo(rx + 42, ry + h);
     ctx.stroke();
 
-    ctx.strokeStyle = "#1b3e1b";
-    ctx.lineWidth = 1;
-    for (let i = 10; i < h - 10; i += 20) {
+    // Иголки
+    ctx.strokeStyle = "#d8f3dc";
+    ctx.lineWidth = 1.5;
+    for (let i = 15; i < h - 15; i += 24) {
         let cy = ry + i;
         ctx.beginPath();
-        ctx.moveTo(rx + 10, cy); ctx.lineTo(rx + 4, cy - 4);
-        ctx.moveTo(rx + 40, cy); ctx.lineTo(rx + 46, cy - 4);
+        ctx.moveTo(rx, cy); ctx.lineTo(rx - 5, cy - 3);
+        ctx.moveTo(rx + w, cy); ctx.lineTo(rx + w + 5, cy - 3);
         ctx.stroke();
     }
+
+    // Внешняя обводка
+    ctx.strokeStyle = "#0d2818";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(rx, ry, w, h);
+
     ctx.restore();
 }
 
-// Управление спавном из пула
 function spawnObstacle() {
     let obs = obstaclePool.find(o => !o.active);
     if (!obs) return;
 
     obs.x = canvas.width;
-    obs.gap = 140;
+    obs.gap = 145;
     obs.topHeight = (Math.random() * (canvas.height - obs.gap - 160) + 50) | 0;
     obs.bottomY = obs.topHeight + obs.gap;
-    obs.width = 50;
+    obs.width = 54;
     obs.passed = false;
     obs.active = true;
 
     let rand = Math.random();
-    if (rand < 0.05) {
-        spawnPowerup(obs.x + 25, obs.topHeight + obs.gap / 2, 'BOOST');
-    } else if (rand < 0.20) {
-        spawnPowerup(obs.x + 25, obs.topHeight + obs.gap / 2, 'SHIELD');
-    } else if (rand < 0.70) {
-        spawnSeed(obs.x + 25, obs.topHeight + obs.gap / 2);
+    if (rand < 0.06) {
+        spawnPowerup(obs.x + 27, obs.topHeight + obs.gap / 2, 'BOOST');
+    } else if (rand < 0.22) {
+        spawnPowerup(obs.x + 27, obs.topHeight + obs.gap / 2, 'SHIELD');
+    } else if (rand < 0.75) {
+        spawnSeed(obs.x + 27, obs.topHeight + obs.gap / 2);
     }
 }
 
 function spawnSeed(x, y) {
     let s = seedPool.find(item => !item.active);
     if (s) {
-        s.x = x; s.y = y; s.active = true;
+        s.x = x; s.y = y; s.rotation = Math.random() * Math.PI; s.active = true;
     }
 }
 
@@ -393,7 +481,6 @@ function spawnPowerup(x, y, type) {
     }
 }
 
-// UI & Управление
 function updateUI() {
     const val = seedsData.toString();
     document.querySelectorAll(".seeds-val").forEach(el => el.textContent = val);
@@ -436,7 +523,7 @@ function renderShop() {
         div.innerHTML = `
             <div class="item-preview" style="background:${item.color}"></div>
             <div>${item.name}</div>
-            <div>${active ? 'Надет' : bought ? 'Выбрать' : item.price + ' 🌻'}</div>
+            <div style="margin-top:4px; color:${active ? '#2ecc71' : '#fff'}">${active ? 'Надет' : bought ? 'Выбрать' : item.price + ' 🌻'}</div>
         `;
         div.onclick = () => buySkin('balloon', item);
         bShop.appendChild(div);
@@ -450,7 +537,7 @@ function renderShop() {
         div.innerHTML = `
             <div class="item-preview" style="background:${item.color}"></div>
             <div>${item.name}</div>
-            <div>${active ? 'Надет' : bought ? 'Выбрать' : item.price + ' 🌻'}</div>
+            <div style="margin-top:4px; color:${active ? '#2ecc71' : '#fff'}">${active ? 'Надет' : bought ? 'Выбрать' : item.price + ' 🌻'}</div>
         `;
         div.onclick = () => buySkin('hamster', item);
         hShop.appendChild(div);
@@ -476,10 +563,10 @@ function triggerPop() {
         hamster.isPopped = true;
         hamster.velocity = -240;
         
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < PARTICLE_POOL_SIZE; i++) {
             particlesPool[i] = {
-                x: hamster.x, y: hamster.y - 20, size: Math.random() * 6 + 4,
-                vx: (Math.random() - 0.5) * 400, vy: (Math.random() - 0.5) * 400,
+                x: hamster.x, y: hamster.y - 20, size: Math.random() * 5 + 3,
+                vx: (Math.random() - 0.5) * 450, vy: (Math.random() - 0.5) * 450,
                 alpha: 1, active: true
             };
         }
@@ -513,47 +600,79 @@ function resetGame() {
     spawnTimer = 0;
     shieldTime = 0;
     boostTime = 0;
-    gameSpeed = 150;
+    gameSpeed = 160;
     gameState = "PLAYING";
 }
 
 let lastTime = performance.now();
 
-// ГЛАВНЫЙ ОПТИМИЗИРОВАННЫЙ ИГРОВОЙ ЦИКЛ
+// Главный цикл рендеринга
 function loop(now) {
     let dt = (now - lastTime) / 1000;
-    if (dt > 0.1) dt = 0.1; // Ограничение скачков при смене вкладок браузера
+    if (dt > 0.1) dt = 0.1;
     lastTime = now;
 
     if (gameState === "PLAYING") {
         if (shieldTime > 0) shieldTime -= dt;
         if (boostTime > 0) {
             boostTime -= dt;
-            gameSpeed = 380;
+            gameSpeed = 400;
         } else {
-            gameSpeed = 150;
+            gameSpeed = 160;
         }
 
         spawnTimer += dt;
-        let spawnInterval = boostTime > 0 ? 0.6 : 1.6;
+        let spawnInterval = boostTime > 0 ? 0.55 : 1.5;
         if (spawnTimer >= spawnInterval) {
             spawnTimer = 0;
             spawnObstacle();
         }
     }
 
-    // Фон
-    ctx.fillStyle = "#fceade";
+    // Детализированный Фон Спальни
+    let bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    bgGrad.addColorStop(0, '#f9eae1');
+    bgGrad.addColorStop(0.7, '#f7d6c1');
+    bgGrad.addColorStop(1, '#e3a882');
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Окно спальни
-    ctx.fillStyle = "#87ceeb"; ctx.fillRect(250, 80, 100, 120);
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 6; ctx.strokeRect(250, 80, 100, 120);
+    // Обойные узоры
+    ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+    for (let x = 0; x < canvas.width; x += 40) {
+        ctx.fillRect(x, 0, 2, canvas.height - 40);
+    }
+
+    // Окно спальни с закругленными углами
+    ctx.save();
+    ctx.fillStyle = "#a8dadc";
+    ctx.fillRect(230, 70, 120, 140);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 6;
+    ctx.strokeRect(230, 70, 120, 140);
+    // Рама окна
+    ctx.beginPath();
+    ctx.moveTo(290, 70); ctx.lineTo(290, 210);
+    ctx.moveTo(230, 140); ctx.lineTo(350, 140);
+    ctx.stroke();
+    // Облачко
+    ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+    ctx.beginPath(); ctx.arc(260, 110, 14, 0, Math.PI * 2); ctx.arc(275, 105, 18, 0, Math.PI * 2); ctx.arc(295, 110, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // Деревянный пол
+    let floorGrad = ctx.createLinearGradient(0, canvas.height - 40, 0, canvas.height);
+    floorGrad.addColorStop(0, '#8d5b4c');
+    floorGrad.addColorStop(1, '#5c3a2f');
+    ctx.fillStyle = floorGrad;
+    ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+    ctx.fillStyle = '#4a2c22';
+    ctx.fillRect(0, canvas.height - 40, canvas.width, 4);
 
     if (gameState === "PLAYING" || gameState === "DYING" || gameState === "GAMEOVER") {
         hamster.update(dt);
 
-        // Обновление и отрисовка препятствий
+        // Препятствия
         for (let i = 0; i < OBSTACLE_POOL_SIZE; i++) {
             let obs = obstaclePool[i];
             if (!obs.active) continue;
@@ -568,11 +687,11 @@ function loop(now) {
                 if (obs.x + obs.width < 0) obs.active = false;
             }
 
-            drawCactus(obs.x, 0, obs.width, obs.topHeight);
-            drawCactus(obs.x, obs.bottomY, obs.width, canvas.height - obs.bottomY - 40);
+            drawCactusHD(obs.x, 0, obs.width, obs.topHeight, true);
+            drawCactusHD(obs.x, obs.bottomY, obs.width, canvas.height - obs.bottomY - 40, false);
         }
 
-        // Обновление и отрисовка семечек
+        // Семечки
         for (let i = 0; i < SEED_POOL_SIZE; i++) {
             let s = seedPool[i];
             if (!s.active) continue;
@@ -590,15 +709,29 @@ function loop(now) {
             if (s.active) {
                 ctx.save();
                 ctx.translate(s.x | 0, s.y | 0);
+                ctx.rotate(s.rotation);
+                
+                // Детализированная семечка
+                let seedGrad = ctx.createLinearGradient(-6, -10, 6, 10);
+                seedGrad.addColorStop(0, '#4a3222');
+                seedGrad.addColorStop(0.5, '#2b1a10');
+                seedGrad.addColorStop(1, '#150d08');
+
                 ctx.beginPath();
-                ctx.ellipse(0, 0, 6, 10, Math.PI / 4, 0, Math.PI * 2);
-                ctx.fillStyle = "#3a2518"; ctx.fill();
+                ctx.ellipse(0, 0, 7, 12, 0, 0, Math.PI * 2);
+                ctx.fillStyle = seedGrad; ctx.fill();
                 ctx.strokeStyle = "#f4c430"; ctx.lineWidth = 1.5; ctx.stroke();
+
+                // Полоска на семечке
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(0, 9); ctx.stroke();
+
                 ctx.restore();
             }
         }
 
-        // Обновление и отрисовка бонусов
+        // Бонусы
         for (let i = 0; i < POWERUP_POOL_SIZE; i++) {
             let p = powerupPool[i];
             if (!p.active) continue;
@@ -617,26 +750,33 @@ function loop(now) {
             if (p.active) {
                 ctx.save();
                 ctx.translate(p.x | 0, p.y | 0);
-                ctx.beginPath();
-                ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = p.type === 'SHIELD' ? "#3498db" : "#f1c40f";
-                ctx.fill();
+                
+                let pGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, p.radius);
+                if (p.type === 'SHIELD') {
+                    pGrad.addColorStop(0, '#5dede7'); pGrad.addColorStop(1, '#0077b6');
+                } else {
+                    pGrad.addColorStop(0, '#fff07c'); pGrad.addColorStop(1, '#f77f00');
+                }
+
+                ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = pGrad; ctx.fill();
                 ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
-                ctx.fillStyle = "#fff"; ctx.font = "bold 14px sans-serif";
+
+                ctx.fillStyle = "#fff"; ctx.font = "bold 15px sans-serif";
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText(p.type === 'SHIELD' ? "🛡️" : "⚡", 0, 1);
                 ctx.restore();
             }
         }
 
-        // Частицы
+        // Частицы лопнувшего шара
         for (let i = 0; i < PARTICLE_POOL_SIZE; i++) {
             let p = particlesPool[i];
             if (!p.active) continue;
             p.x += p.vx * dt;
             p.y += p.vy * dt;
-            p.vy += 400 * dt;
-            p.alpha -= 0.8 * dt;
+            p.vy += 450 * dt;
+            p.alpha -= 0.85 * dt;
 
             if (p.alpha <= 0) {
                 p.active = false;
@@ -656,51 +796,85 @@ function loop(now) {
     requestAnimationFrame(loop);
 }
 
+// Детализированный интерфейс
 function drawUI() {
     if (gameState === "PLAYING" || gameState === "DYING") {
-        ctx.fillStyle = "#4a3525";
-        ctx.font = "bold 20px 'Segoe UI', sans-serif";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.roundRect(12, 12, 110, 55, 10);
+        ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "800 18px 'Segoe UI', sans-serif";
         ctx.textAlign = "left";
-        ctx.fillText(`Счет: ${score}`, 20, 35);
+        ctx.fillText(`Счёт: ${score}`, 22, 35);
+
+        ctx.font = "bold 12px 'Segoe UI', sans-serif";
+        ctx.fillStyle = "#ffbfa3";
+        ctx.fillText(`Рекорд: ${highScore}`, 22, 55);
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.roundRect(270, 12, 118, 36, 10);
+        ctx.fill();
 
         ctx.textAlign = "right";
-        ctx.fillText(`🌻 ${seedsData + seedsInGame}`, 380, 35);
-        
-        ctx.font = "bold 14px 'Segoe UI', sans-serif";
-        ctx.fillStyle = "#8d5b4c";
-        ctx.fillText(`Рекорд 🏆: ${highScore}`, 380, 58);
+        ctx.font = "bold 16px 'Segoe UI', sans-serif";
+        ctx.fillStyle = "#ffd700";
+        ctx.fillText(`🌻 ${seedsData + seedsInGame}`, 376, 36);
 
+        // Индикаторы таймеров бонусов
         let barY = 20;
         if (shieldTime > 0) {
             ctx.fillStyle = "rgba(52, 152, 219, 0.8)";
-            ctx.fillRect(130, barY, (shieldTime / 5.0) * 140, 8);
-            barY += 12;
+            ctx.fillRect(132, barY, (shieldTime / 5.0) * 130, 8);
+            ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1; ctx.strokeRect(132, barY, 130, 8);
+            barY += 14;
         }
         if (boostTime > 0) {
             ctx.fillStyle = "rgba(241, 196, 15, 0.8)";
-            ctx.fillRect(130, barY, (boostTime / 5.0) * 140, 8);
+            ctx.fillRect(132, barY, (boostTime / 5.0) * 130, 8);
+            ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1; ctx.strokeRect(132, barY, 130, 8);
         }
 
     } else if (gameState === "GAMEOVER") {
         ctx.textAlign = "center";
-        ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-        ctx.fillRect(40, 160, 320, 240);
+        
+        // Окно проигрыша
+        ctx.fillStyle = "rgba(25, 20, 35, 0.92)";
+        ctx.roundRect(40, 150, 320, 260, 16);
+        ctx.fill();
+        ctx.strokeStyle = "#ff5e7e"; ctx.lineWidth = 2; ctx.stroke();
 
-        ctx.fillStyle = "#d63456";
-        ctx.font = "bold 26px sans-serif";
-        ctx.fillText("ЛОПНУЛ!", canvas.width / 2, 205);
+        ctx.fillStyle = "#ff5e7e";
+        ctx.font = "800 28px sans-serif";
+        ctx.fillText("ЛОПНУЛ!", canvas.width / 2, 195);
 
-        ctx.fillStyle = "#333";
+        ctx.fillStyle = "#ffffff";
         ctx.font = "18px sans-serif";
-        ctx.fillText(`Очки: ${score}`, canvas.width / 2, 245);
-        ctx.fillText(`Собрано: +${seedsInGame} 🌻`, canvas.width / 2, 280);
-        ctx.fillText(`Рекорд: ${highScore}`, canvas.width / 2, 315);
+        ctx.fillText(`Очки: ${score}`, canvas.width / 2, 240);
+        ctx.fillText(`Собрано: +${seedsInGame} 🌻`, canvas.width / 2, 275);
+        ctx.fillText(`Рекорд: ${highScore}`, canvas.width / 2, 310);
 
         ctx.font = "14px sans-serif";
-        ctx.fillStyle = "#666";
-        ctx.fillText("Кликните для меню", canvas.width / 2, 365);
+        ctx.fillStyle = "#aaa";
+        ctx.fillText("Кликните для выхода в меню", canvas.width / 2, 370);
         ctx.textAlign = "left";
     }
+}
+
+// Полифилл для roundRect если браузер старый
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        this.beginPath();
+        this.moveTo(x + r, y);
+        this.arcTo(x + w, y, x + w, y + h, r);
+        this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r);
+        this.arcTo(x, y, x + w, y, r);
+        this.closePath();
+        return this;
+    };
 }
 
 function handleInput() {
