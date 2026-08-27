@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Хомяк на шарике — Safety Boost Edition</title>
+    <title>Хомяк на шарике — Deluxe Edition</title>
     <style>
         * {
             box-sizing: border-box;
@@ -44,46 +44,136 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(25, 20, 35, 0.92);
-            backdrop-filter: blur(6px);
+            background: rgba(20, 15, 30, 0.85);
+            backdrop-filter: blur(8px);
             z-index: 10;
         }
         .hidden { display: none !important; }
-        h1 {
-            color: #ff5e7e;
-            font-size: 32px;
-            margin-bottom: 25px;
-            text-shadow: 0 4px 10px rgba(255, 94, 126, 0.4);
-            font-weight: 800;
+
+        /* ОБНОВЛЕННОЕ ГЛАВНОЕ МЕНЮ */
+        #main-menu {
+            background: radial-gradient(circle at center, rgba(40, 25, 55, 0.95), rgba(15, 10, 25, 0.98));
         }
-        h2 { color: #fceade; font-size: 18px; margin: 15px 0 10px 0; }
-        
+
+        .game-title-container {
+            text-align: center;
+            margin-bottom: 25px;
+            animation: floatTitle 3s ease-in-out infinite;
+        }
+
+        @keyframes floatTitle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        h1.main-title {
+            color: #ff5e7e;
+            font-size: 34px;
+            margin-bottom: 4px;
+            text-shadow: 0 4px 15px rgba(255, 94, 126, 0.6), 0 0 30px rgba(255, 94, 126, 0.2);
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        .title-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #f1c40f, #e67e22);
+            color: #1a1a1a;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 12px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            box-shadow: 0 2px 10px rgba(241, 196, 15, 0.4);
+        }
+
+        .stats-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 12px 20px;
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
         .btn {
             background: linear-gradient(135deg, #ff5e7e, #e63956);
             color: white;
             border: none;
             padding: 14px 30px;
-            margin: 8px;
             border-radius: 30px;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 6px 15px rgba(230, 57, 86, 0.4);
-            transition: all 0.15s ease;
-            width: 210px;
+            box-shadow: 0 6px 20px rgba(230, 57, 86, 0.4);
+            transition: all 0.2s ease;
+            width: 220px;
             text-align: center;
             text-transform: uppercase;
             letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
         }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(230, 57, 86, 0.6); }
-        .btn:active { transform: translateY(0); }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(60deg, transparent, rgba(255,255,255,0.25), transparent);
+            transform: rotate(30deg);
+            transition: 0.5s;
+        }
+
+        .btn:hover::after {
+            left: 100%;
+        }
+
+        .btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 25px rgba(230, 57, 86, 0.6); }
+        .btn:active { transform: translateY(1px); }
         
+        .btn-shop { background: linear-gradient(135deg, #2ecc71, #27ae60); box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4); }
+        .btn-shop:hover { box-shadow: 0 8px 25px rgba(46, 204, 113, 0.6); }
+
+        .btn-ach { background: linear-gradient(135deg, #f39c12, #d35400); box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4); }
+        .btn-ach:hover { box-shadow: 0 8px 25px rgba(243, 156, 18, 0.6); }
+
         .seeds-counter {
             position: absolute;
             top: 15px;
             right: 15px;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 15px;
             color: #fff;
             background: rgba(0, 0, 0, 0.4);
             padding: 6px 16px;
@@ -110,7 +200,6 @@
         .shop-item.bought { border-color: #ff5e7e; }
         .item-preview { width: 34px; height: 34px; border-radius: 50%; margin: 6px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
-        /* Стиль списка достижений */
         .achievements-list {
             width: 90%;
             max-height: 380px;
@@ -140,7 +229,6 @@
         .ach-desc { font-size: 11px; color: #aaa; margin-top: 2px; }
         .ach-reward { font-size: 12px; color: #ffd700; font-weight: bold; margin-top: 4px; }
 
-        /* Всплывающее уведомление */
         #ach-toast {
             position: absolute;
             top: -70px;
@@ -176,45 +264,132 @@
         </div>
     </div>
 
-    <!-- ГЛАВНОЕ МЕНЮ -->
+    <!-- ОБНОВЛЕННОЕ ГЛАВНОЕ МЕНЮ -->
     <div id="main-menu" class="ui-screen">
-        <h1>Хомяк на шарике</h1>
-        <div class="seeds-counter">🌻 <span class="seeds-val">0</span></div>
-        <button class="btn" onclick="startGame()">Играть</button>
-        <button class="btn" style="background: linear-gradient(135deg, #2ecc71, #27ae60);" onclick="openShop()">Магазин</button>
-        <button class="btn" style="background: linear-gradient(135deg, #f39c12, #d35400);" onclick="openAchievements()">Ачивки</button>
+        <div class="game-title-container">
+            <h1 class="main-title">Хомяк на шарике</h1>
+            <span class="title-badge">Deluxe Edition</span>
+        </div>
+
+        <div class="stats-card">
+            <div class="stat-item">
+                <div class="stat-label">Рекорд</div>
+                <div class="stat-value" style="color: #ff5e7e;" id="menu-highscore">0</div>
+            </div>
+            <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+            <div class="stat-item">
+                <div class="stat-label">Семечки</div>
+                <div class="stat-value" style="color: #ffd700;"><span class="seeds-val">0</span> 🌻</div>
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn" onclick="startGame()">Играть</button>
+            <button class="btn btn-shop" onclick="openShop()">Магазин</button>
+            <button class="btn btn-ach" onclick="openAchievements()">Ачивки</button>
+        </div>
     </div>
 
     <!-- МАГАЗИН -->
     <div id="shop-menu" class="ui-screen hidden">
-        <h1>Магазин</h1>
+        <h1 style="color: #ff5e7e; font-size: 28px; margin-bottom: 15px;">Магазин</h1>
         <div class="seeds-counter">🌻 <span class="seeds-val">0</span></div>
         
         <div class="shop-section">
-            <h2>Цвет шарика (15 🌻)</h2>
+            <h2 style="color: #fceade; font-size: 16px; margin: 10px 0;">Цвет шарика (15 🌻)</h2>
             <div class="shop-grid" id="balloon-shop"></div>
 
-            <h2>Цвет хомяка (20 🌻)</h2>
+            <h2 style="color: #fceade; font-size: 16px; margin: 15px 0 10px 0;">Цвет хомяка (20 🌻)</h2>
             <div class="shop-grid" id="hamster-shop"></div>
         </div>
 
-        <button class="btn" style="margin-top: 20px;" onclick="closeShop()">Назад</button>
+        <button class="btn" style="margin-top: 20px; width: 160px; padding: 10px;" onclick="closeShop()">Назад</button>
     </div>
 
     <!-- МЕНЮ ДОСТИЖЕНИЙ -->
     <div id="achievements-menu" class="ui-screen hidden">
-        <h1>Достижения</h1>
+        <h1 style="color: #ff5e7e; font-size: 28px; margin-bottom: 15px;">Достижения</h1>
         <div class="seeds-counter">🌻 <span class="seeds-val">0</span></div>
         
         <div class="achievements-list" id="achievements-list"></div>
 
-        <button class="btn" style="margin-top: 20px;" onclick="closeAchievements()">Назад</button>
+        <button class="btn" style="margin-top: 20px; width: 160px; padding: 10px;" onclick="closeAchievements()">Назад</button>
     </div>
 </div>
 
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+
+// ==========================================
+// ЗВУКОВОЙ ДВИЖОК (WEB AUDIO API)
+// ==========================================
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function playSound(type) {
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    if (type === 'jump') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(350, now);
+        osc.frequency.exponentialRampToValueAtTime(700, now + 0.12);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+    } 
+    else if (type === 'seed') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.setValueAtTime(1200, now + 0.06);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+    } 
+    else if (type === 'pop') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+    } 
+    else if (type === 'powerup') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(900, now + 0.2);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+    } 
+    else if (type === 'score') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+    }
+}
 
 // Сохранения
 let seedsData = parseInt(localStorage.getItem("hamster_seeds")) || 0;
@@ -226,7 +401,6 @@ let ownedSkins = JSON.parse(localStorage.getItem("hamster_skins")) || {
 let currentBalloon = localStorage.getItem("hamster_cur_balloon") || "#ff5e7e";
 let currentHamster = localStorage.getItem("hamster_cur_hamster") || "#d49b4b";
 
-// Система достижений
 let unlockedAchievements = JSON.parse(localStorage.getItem("hamster_achievements")) || [];
 
 const ACHIEVEMENTS = [
@@ -261,12 +435,15 @@ let globalTime = 0;
 
 let shieldTime = 0;
 let boostTime = 0;
+let screenShake = 0; // Спецэффект тряски экрана
 
 // Object Pools
 const OBSTACLE_POOL_SIZE = 8;
 const SEED_POOL_SIZE = 8;
 const POWERUP_POOL_SIZE = 4;
-const PARTICLE_POOL_SIZE = 30;
+const PARTICLE_POOL_SIZE = 40;
+const TRAIL_POOL_SIZE = 20;
+const FLOATING_TEXT_SIZE = 10;
 
 const obstaclePool = Array.from({ length: OBSTACLE_POOL_SIZE }, () => ({
     x: 0, topHeight: 0, bottomY: 0, width: 54, gap: 145, active: false, passed: false
@@ -281,8 +458,25 @@ const powerupPool = Array.from({ length: POWERUP_POOL_SIZE }, () => ({
 }));
 
 const particlesPool = Array.from({ length: PARTICLE_POOL_SIZE }, () => ({
-    x: 0, y: 0, size: 0, vx: 0, vy: 0, alpha: 0, active: false
+    x: 0, y: 0, size: 0, vx: 0, vy: 0, alpha: 0, active: false, color: "#fff"
 }));
+
+// Пул шлейфа за шариком
+const trailPool = Array.from({ length: TRAIL_POOL_SIZE }, () => ({
+    x: 0, y: 0, radius: 0, alpha: 0, active: false, color: "#fff"
+}));
+
+// Пул всплывающего текста (+1, +5)
+const floatingTextPool = Array.from({ length: FLOATING_TEXT_SIZE }, () => ({
+    x: 0, y: 0, text: "", alpha: 0, active: false, color: "#fff"
+}));
+
+function spawnFloatingText(x, y, text, color = "#ffd700") {
+    let ft = floatingTextPool.find(t => !t.active);
+    if (ft) {
+        ft.x = x; ft.y = y; ft.text = text; ft.alpha = 1.0; ft.color = color; ft.active = true;
+    }
+}
 
 // Детальный Хомяк
 const hamster = {
@@ -294,6 +488,8 @@ const hamster = {
     velocity: 0,
     rotation: 0,
     isPopped: false,
+    squashX: 1, // Деформация при прыжке
+    squashY: 1,
 
     draw() {
         let hx = this.x | 0;
@@ -303,7 +499,10 @@ const hamster = {
         ctx.translate(hx, hy);
 
         let tilt = Math.min(Math.max(this.velocity / 600, -0.4), 0.4);
-        if (!this.isPopped) ctx.rotate(tilt);
+        if (!this.isPopped) {
+            ctx.rotate(tilt);
+            ctx.scale(this.squashX, this.squashY);
+        }
 
         // 1. Воздушный шар
         if (!this.isPopped) {
@@ -320,13 +519,13 @@ const hamster = {
             ctx.strokeStyle = '#222';
             ctx.stroke();
 
-            // Блик на шарике
+            // Блик
             ctx.beginPath();
             ctx.ellipse(-6, -22, 4, 8, Math.PI / 4, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
             ctx.fill();
 
-            // Узел шарика
+            // Узел
             ctx.beginPath();
             ctx.moveTo(-3, 1); ctx.lineTo(3, 1); ctx.lineTo(0, -2);
             ctx.closePath();
@@ -484,6 +683,23 @@ const hamster = {
 
         this.y += this.velocity * dt;
 
+        // Восстановление формы после прыжка (Squash & Stretch)
+        this.squashX += (1 - this.squashX) * 10 * dt;
+        this.squashY += (1 - this.squashY) * 10 * dt;
+
+        // Добавление частички шлейфа при полете
+        if (gameState === "PLAYING" && Math.random() < 0.6) {
+            let tr = trailPool.find(t => !t.active);
+            if (tr) {
+                tr.x = this.x - 5;
+                tr.y = this.y - 16;
+                tr.radius = Math.random() * 4 + 3;
+                tr.alpha = 0.6;
+                tr.color = boostTime > 0 ? "#f1c40f" : shieldTime > 0 ? "#3498db" : currentBalloon;
+                tr.active = true;
+            }
+        }
+
         if (this.isPopped) this.rotation += 10 * dt;
 
         if (this.y + 26 >= canvas.height - 40) {
@@ -497,7 +713,12 @@ const hamster = {
     },
 
     jump() {
-        if (!this.isPopped && boostTime <= 0) this.velocity = this.jumpForce;
+        if (!this.isPopped && boostTime <= 0) {
+            this.velocity = this.jumpForce;
+            this.squashX = 0.8; // Вытягиваем при прыжке
+            this.squashY = 1.25;
+            playSound('jump');
+        }
     },
 
     reset() {
@@ -505,6 +726,8 @@ const hamster = {
         this.velocity = 0;
         this.rotation = 0;
         this.isPopped = false;
+        this.squashX = 1;
+        this.squashY = 1;
     }
 };
 
@@ -603,6 +826,7 @@ function clearAheadObstacles(count = 3) {
                 p.vx = (Math.random() - 0.5) * 300;
                 p.vy = (Math.random() - 0.5) * 300;
                 p.alpha = 1;
+                p.color = "#2e7d32";
                 p.active = true;
             }
         }
@@ -623,7 +847,6 @@ function spawnPowerup(x, y, type) {
     }
 }
 
-// Проверка и разблокировка ачивок
 function unlockAchievement(id) {
     if (unlockedAchievements.includes(id)) return;
     
@@ -636,7 +859,6 @@ function unlockAchievement(id) {
     localStorage.setItem("hamster_achievements", JSON.stringify(unlockedAchievements));
     updateUI();
 
-    // Показать всплывающее окно
     const toast = document.getElementById("ach-toast");
     document.getElementById("toast-icon").textContent = ach.icon;
     document.getElementById("toast-title").textContent = ach.title;
@@ -648,6 +870,7 @@ function unlockAchievement(id) {
 function updateUI() {
     const val = seedsData.toString();
     document.querySelectorAll(".seeds-val").forEach(el => el.textContent = val);
+    document.getElementById("menu-highscore").textContent = highScore;
     localStorage.setItem("hamster_seeds", seedsData);
     localStorage.setItem("hamster_highscore", highScore);
     localStorage.setItem("hamster_skins", JSON.stringify(ownedSkins));
@@ -656,6 +879,7 @@ function updateUI() {
 }
 
 function startGame() {
+    initAudio();
     document.getElementById("main-menu").classList.add("hidden");
     document.getElementById("shop-menu").classList.add("hidden");
     document.getElementById("achievements-menu").classList.add("hidden");
@@ -664,6 +888,7 @@ function startGame() {
 }
 
 function openShop() {
+    initAudio();
     renderShop();
     document.getElementById("main-menu").classList.add("hidden");
     document.getElementById("shop-menu").classList.remove("hidden");
@@ -675,6 +900,7 @@ function closeShop() {
 }
 
 function openAchievements() {
+    initAudio();
     renderAchievements();
     document.getElementById("main-menu").classList.add("hidden");
     document.getElementById("achievements-menu").classList.remove("hidden");
@@ -760,12 +986,14 @@ function triggerPop() {
         gameState = "DYING";
         hamster.isPopped = true;
         hamster.velocity = -240;
+        screenShake = 0.3; // Активируем тряску экрана
+        playSound('pop');
         
         for (let i = 0; i < PARTICLE_POOL_SIZE; i++) {
             particlesPool[i] = {
                 x: hamster.x, y: hamster.y - 15, size: Math.random() * 4 + 2.5,
                 vx: (Math.random() - 0.5) * 450, vy: (Math.random() - 0.5) * 450,
-                alpha: 1, active: true
+                alpha: 1, active: true, color: currentBalloon
             };
         }
     }
@@ -776,7 +1004,6 @@ function finishGameOver() {
     if (score > highScore) highScore = score;
     seedsData += seedsInGame;
     
-    // Ачивки за семечки
     if (seedsData >= 25) unlockAchievement("collector_25");
 
     updateUI();
@@ -796,12 +1023,15 @@ function resetGame() {
     seedPool.forEach(s => s.active = false);
     powerupPool.forEach(p => p.active = false);
     particlesPool.forEach(p => p.active = false);
+    trailPool.forEach(t => t.active = false);
+    floatingTextPool.forEach(ft => ft.active = false);
     
     score = 0;
     seedsInGame = 0;
     spawnTimer = 0;
     shieldTime = 0;
     boostTime = 0;
+    screenShake = 0;
     gameSpeed = 160;
     gameState = "PLAYING";
 }
@@ -837,6 +1067,15 @@ function loop(now) {
         }
     }
 
+    // Тряска экрана при взрыве
+    ctx.save();
+    if (screenShake > 0) {
+        screenShake -= dt;
+        let shakeX = (Math.random() - 0.5) * 12;
+        let shakeY = (Math.random() - 0.5) * 12;
+        ctx.translate(shakeX, shakeY);
+    }
+
     // Детализированный Фон
     let bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
     bgGrad.addColorStop(0, '#f9eae1');
@@ -851,7 +1090,6 @@ function loop(now) {
     }
 
     // Окно
-    ctx.save();
     ctx.fillStyle = "#a8dadc";
     ctx.fillRect(230, 70, 120, 140);
     ctx.strokeStyle = "#ffffff";
@@ -863,7 +1101,6 @@ function loop(now) {
     ctx.stroke();
     ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
     ctx.beginPath(); ctx.arc(260, 110, 14, 0, Math.PI * 2); ctx.arc(275, 105, 18, 0, Math.PI * 2); ctx.arc(295, 110, 14, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
 
     // Деревянный пол
     let floorGrad = ctx.createLinearGradient(0, canvas.height - 40, 0, canvas.height);
@@ -877,6 +1114,25 @@ function loop(now) {
     if (gameState === "PLAYING" || gameState === "DYING" || gameState === "GAMEOVER") {
         hamster.update(dt);
 
+        // Отрисовка Шлейфа
+        for (let i = 0; i < TRAIL_POOL_SIZE; i++) {
+            let tr = trailPool[i];
+            if (!tr.active) continue;
+            tr.x -= gameSpeed * dt * 0.5;
+            tr.alpha -= 1.8 * dt;
+            tr.radius -= 2 * dt;
+            if (tr.alpha <= 0 || tr.radius <= 0) {
+                tr.active = false;
+            } else {
+                ctx.fillStyle = tr.color;
+                ctx.globalAlpha = Math.max(0, tr.alpha);
+                ctx.beginPath();
+                ctx.arc(tr.x, tr.y, tr.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
         // Препятствия
         for (let i = 0; i < OBSTACLE_POOL_SIZE; i++) {
             let obs = obstaclePool[i];
@@ -887,7 +1143,8 @@ function loop(now) {
                 if (!obs.passed && obs.x + obs.width < hamster.x) {
                     score++;
                     obs.passed = true;
-                    // Ачивки за очки
+                    playSound('score');
+                    spawnFloatingText(hamster.x, hamster.y - 20, "+1", "#2ecc71");
                     if (score >= 10) unlockAchievement("score_10");
                     if (score >= 30) unlockAchievement("score_30");
                 }
@@ -910,6 +1167,8 @@ function loop(now) {
                 if (dist < hamster.radius + s.radius) {
                     s.active = false;
                     seedsInGame += 5;
+                    playSound('seed');
+                    spawnFloatingText(s.x, s.y, "+5 🌻", "#ffd700");
                 }
                 if (s.x < -20) s.active = false;
             }
@@ -943,12 +1202,15 @@ function loop(now) {
                 let dist = Math.hypot(hamster.x - p.x, hamster.y - p.y);
                 if (dist < hamster.radius + p.radius) {
                     p.active = false;
+                    playSound('powerup');
                     if (p.type === 'SHIELD') {
                         shieldTime = 5.0;
                         unlockAchievement("shield_master");
+                        spawnFloatingText(p.x, p.y, "SHIELD!", "#3498db");
                     } else if (p.type === 'BOOST') {
                         boostTime = 5.0;
                         unlockAchievement("speed_demon");
+                        spawnFloatingText(p.x, p.y, "BOOST!", "#f1c40f");
                     }
                 }
                 if (p.x < -20) p.active = false;
@@ -976,7 +1238,7 @@ function loop(now) {
             }
         }
 
-        // Частицы
+        // Частицы взрыва
         for (let i = 0; i < PARTICLE_POOL_SIZE; i++) {
             let p = particlesPool[i];
             if (!p.active) continue;
@@ -988,11 +1250,29 @@ function loop(now) {
             if (p.alpha <= 0) {
                 p.active = false;
             } else {
-                ctx.save();
                 ctx.globalAlpha = Math.max(0, p.alpha);
-                ctx.fillStyle = currentBalloon;
+                ctx.fillStyle = p.color;
                 ctx.beginPath(); ctx.arc(p.x | 0, p.y | 0, p.size, 0, Math.PI * 2); ctx.fill();
-                ctx.restore();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        // Всплывающие очки / сообщения
+        for (let i = 0; i < FLOATING_TEXT_SIZE; i++) {
+            let ft = floatingTextPool[i];
+            if (!ft.active) continue;
+            ft.y -= 40 * dt;
+            ft.alpha -= 1.2 * dt;
+
+            if (ft.alpha <= 0) {
+                ft.active = false;
+            } else {
+                ctx.globalAlpha = Math.max(0, ft.alpha);
+                ctx.fillStyle = ft.color;
+                ctx.font = "800 16px 'Segoe UI', sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.globalAlpha = 1.0;
             }
         }
     }
@@ -1000,6 +1280,7 @@ function loop(now) {
     if (gameState !== "MENU") hamster.draw();
     drawUI();
 
+    ctx.restore(); // Сброс контекста после shake
     requestAnimationFrame(loop);
 }
 
@@ -1080,6 +1361,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 }
 
 function handleInput() {
+    initAudio();
     if (gameState === "PLAYING") hamster.jump();
     else if (gameState === "GAMEOVER") {
         gameState = "MENU";
