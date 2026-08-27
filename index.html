@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bounce Hamster</title>
+  <title>Хомяк в шаре</title>
   <style>
     body {
       margin: 0;
@@ -40,7 +40,6 @@
       justify-content: space-between;
       align-items: center;
       pointer-events: none;
-      z-index: 2;
     }
 
     .hud-text {
@@ -54,8 +53,8 @@
       background: #ff9800;
       border: none;
       color: white;
-      padding: 10px 24px;
-      font-size: 18px;
+      padding: 8px 16px;
+      font-size: 16px;
       font-weight: bold;
       border-radius: 8px;
       cursor: pointer;
@@ -68,55 +67,25 @@
       box-shadow: 0 2px 0 #b56c00;
     }
 
-    /* Обновленное меню с анимированным градиентным фоном */
     #overlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(135deg, rgba(26, 35, 126, 0.85), rgba(74, 20, 140, 0.85), rgba(183, 28, 28, 0.85));
-      background-size: 400% 400%;
-      animation: gradientBG 10s ease infinite;
-      backdrop-filter: blur(5px);
+      background: rgba(0, 0, 0, 0.6);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 10;
-    }
-
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    /* Фоновый декор для меню (летающие семечки) */
-    .bg-decor {
-      position: absolute;
-      font-size: 30px;
-      opacity: 0.25;
-      user-select: none;
-      pointer-events: none;
-      animation: floatSlow 6s ease-in-out infinite alternate;
-    }
-
-    @keyframes floatSlow {
-      0% { transform: translateY(0px) rotate(0deg); }
-      100% { transform: translateY(-20px) rotate(15deg); }
     }
 
     #overlay h1 {
       margin: 0 0 10px 0;
-      font-size: 48px;
+      font-size: 36px;
       color: #ffeb3b;
-      text-shadow: 0 4px 10px rgba(0,0,0,0.5), 0 0 20px rgba(255, 235, 59, 0.4);
-      letter-spacing: 1px;
     }
 
     #overlay p {
       font-size: 18px;
-      margin-bottom: 25px;
-      color: #e0e0e0;
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+      margin-bottom: 20px;
     }
   </style>
 </head>
@@ -131,13 +100,7 @@
   </div>
 
   <div id="overlay">
-    <!-- Декоративные иконки на фоне меню -->
-    <span class="bg-decor" style="top: 10%; left: 15%; animation-delay: 0s;">🌻</span>
-    <span class="bg-decor" style="top: 70%; left: 10%; animation-delay: 1s;">🐹</span>
-    <span class="bg-decor" style="top: 20%; right: 15%; animation-delay: 2s;">🛡️</span>
-    <span class="bg-decor" style="top: 75%; right: 12%; animation-delay: 3s;">🌻</span>
-
-    <h1 id="overlayTitle">Bounce Hamster</h1>
+    <h1 id="overlayTitle">Хомяк в Шаре</h1>
     <p id="overlaySub">Нажмите "Пробел" или кликните мышкой для прыжка</p>
     <button id="startBtn" onclick="startGame()">Играть!</button>
   </div>
@@ -161,6 +124,7 @@ const SoundFX = {
     }
   },
 
+  // Звук прыжка
   playJump() {
     if (this.muted) return;
     this.init();
@@ -181,6 +145,7 @@ const SoundFX = {
     osc.stop(now + 0.15);
   },
 
+  // Звук подбора семечки
   playPickup() {
     if (this.muted) return;
     this.init();
@@ -189,8 +154,8 @@ const SoundFX = {
     const gain = this.ctx.createGain();
 
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(1318.51, now);
-    osc.frequency.setValueAtTime(1975.53, now + 0.08);
+    osc.frequency.setValueAtTime(1318.51, now); // E6
+    osc.frequency.setValueAtTime(1975.53, now + 0.08); // B6
 
     gain.gain.setValueAtTime(0.2, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
@@ -201,6 +166,7 @@ const SoundFX = {
     osc.stop(now + 0.25);
   },
 
+  // Звук бонуса (Щит)
   playPowerup() {
     if (this.muted) return;
     this.init();
@@ -222,6 +188,7 @@ const SoundFX = {
     osc.stop(now + 0.3);
   },
 
+  // Звук столкновения / проигрыша
   playHit() {
     if (this.muted) return;
     this.init();
@@ -269,6 +236,7 @@ let frameCount = 0;
 
 const groundY = 320;
 
+// Игрок (Хомяк)
 const hamster = {
   x: 100,
   y: groundY - 25,
@@ -283,7 +251,7 @@ const hamster = {
     if (this.isGrounded) {
       this.vy = this.jumpPower;
       this.isGrounded = false;
-      SoundFX.playJump();
+      SoundFX.playJump(); // 🔊 Звук прыжка!
     }
   },
 
@@ -299,6 +267,7 @@ const hamster = {
   },
 
   draw() {
+    // Прозрачный шар
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
@@ -307,6 +276,7 @@ const hamster = {
     ctx.strokeStyle = this.hasShield ? '#00e5ff' : 'rgba(255, 255, 255, 0.8)';
     ctx.stroke();
 
+    // Щит (если активен)
     if (this.hasShield) {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
@@ -315,6 +285,7 @@ const hamster = {
       ctx.stroke();
     }
 
+    // Хомяк (Эмодзи)
     ctx.font = '30px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -336,7 +307,7 @@ function spawnObstacle() {
 }
 
 function spawnItem() {
-  const isPowerup = Math.random() < 0.2;
+  const isPowerup = Math.random() < 0.2; // 20% шанс бонуса
   items.push({
     x: canvas.width,
     y: groundY - 60 - Math.random() * 80,
@@ -361,7 +332,7 @@ function startGame() {
 
 function gameOver() {
   isPlaying = false;
-  SoundFX.playHit();
+  SoundFX.playHit(); // 🔊 Звук проигрыша!
   overlayTitle.innerText = "Игра Окончена!";
   overlaySub.innerText = `Вы набрали: ${Math.floor(score)} очков и 🌻 ${seedsCollected}`;
   overlay.style.display = 'flex';
@@ -372,6 +343,7 @@ function toggleSound() {
   soundBtn.innerText = muted ? '🔇 Звук: Выкл' : '🔊 Звук: Вкл';
 }
 
+// Управление
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Space' || e.code === 'ArrowUp') {
     if (isPlaying) hamster.jump();
@@ -382,30 +354,37 @@ canvas.addEventListener('mousedown', () => {
   if (isPlaying) hamster.jump();
 });
 
+// Главная петля
 function gameLoop() {
   if (!isPlaying) return;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Отрисовка земли
   ctx.fillStyle = '#8B5A2B';
   ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
   ctx.fillStyle = '#4CAF50';
   ctx.fillRect(0, groundY, canvas.width, 10);
 
+  // Спавн объектов
   frameCount++;
   if (frameCount % 100 === 0) spawnObstacle();
   if (frameCount % 130 === 0) spawnItem();
 
+  // Обновление игрока
   hamster.update();
   hamster.draw();
 
+  // Препятствия
   for (let i = obstacles.length - 1; i >= 0; i--) {
     let obs = obstacles[i];
     obs.x -= gameSpeed;
 
+    // Кактус
     ctx.fillStyle = '#2e7d32';
     ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
 
+    // Столкновение с препятствием
     if (
       hamster.x + hamster.radius > obs.x &&
       hamster.x - hamster.radius < obs.x + obs.width &&
@@ -414,7 +393,7 @@ function gameLoop() {
       if (hamster.hasShield) {
         hamster.hasShield = false;
         obstacles.splice(i, 1);
-        SoundFX.playPowerup();
+        SoundFX.playPowerup(); // Звук разбития щита
         continue;
       } else {
         gameOver();
@@ -425,24 +404,27 @@ function gameLoop() {
     if (obs.x + obs.width < 0) obstacles.splice(i, 1);
   }
 
+  // Предметы (Семечки / Щит)
   for (let i = items.length - 1; i >= 0; i--) {
     let item = items[i];
     item.x -= gameSpeed;
 
+    // Рисование
     ctx.font = '20px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(item.type === 'seed' ? '🌻' : '🛡️', item.x, item.y);
 
+    // Сбор предмета
     let dist = Math.hypot(hamster.x - item.x, hamster.y - item.y);
     if (dist < hamster.radius + item.radius) {
       if (item.type === 'seed') {
         seedsCollected++;
         score += 20;
-        SoundFX.playPickup();
+        SoundFX.playPickup(); // 🔊 Звук семечки!
       } else {
         hamster.hasShield = true;
-        SoundFX.playPowerup();
+        SoundFX.playPowerup(); // 🔊 Звук активации щита!
       }
       items.splice(i, 1);
       continue;
@@ -451,6 +433,7 @@ function gameLoop() {
     if (item.x + item.radius < 0) items.splice(i, 1);
   }
 
+  // Обновление очков и скорости
   score += 0.1;
   gameSpeed += 0.0005;
   scoreText.innerText = Math.floor(score);
@@ -461,3 +444,4 @@ function gameLoop() {
 </script>
 </body>
 </html>
+
